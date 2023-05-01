@@ -21,7 +21,7 @@ use std::{
 };
 use typed_builder::TypedBuilder;
 
-use crate::syntax_error::SyntaxError;
+use crate::{syntax_error::SyntaxError, SyntaxKind};
 
 pub type FileId = usize;
 
@@ -111,6 +111,18 @@ impl Token {
     pub fn pretty_print(&self) -> String {
         format!("{} {} {}", self.kind.blue(), self.lexeme, self.span.red(),)
     }
+
+    pub fn new_eof() -> Self {
+        Self {
+            kind: TokenKind::EOF,
+            lexeme: String::new(),
+            span: Span::new(0, 0),
+        }
+    }
+
+    pub fn is_keyword(&self, kw: &str) -> bool {
+        self.lexeme().eq(kw)
+    }
 }
 
 impl Display for Token {
@@ -165,6 +177,10 @@ impl TokenStream {
         self.tokens.get(self.cursor + n)
     }
 
+    pub fn lookahead_nth(&self, n: usize) -> Option<&Token> {
+        self.peek_nth(n)
+    }
+
     fn peek_next(&self) -> Option<&Token> {
         self.tokens.get(self.cursor + 1)
     }
@@ -204,6 +220,14 @@ impl TokenStream {
 
     pub fn current_range(&self) -> Range<usize> {
         self.peek().map_or(0..0, |token| token.range())
+    }
+
+    pub fn current(&self) -> Option<&Token> {
+        self.peek()
+    }
+
+    pub fn bump(&mut self) -> Option<&Token> {
+        self.advance()
     }
 }
 
@@ -668,6 +692,84 @@ pub enum TokenKind {
     UNKNOWN,
     #[end]
     EOF,
+}
+
+impl TokenKind {
+    /// Convert a given [`TokenKind`] to a [`SyntaxKind`].
+    /// This is used to convert the tokens from the **lexer** to the tokens
+    /// used in the **parser** and the **syntax tree**.
+    pub fn to_syntax(self) -> SyntaxKind {
+        match self {
+            TokenKind::PLUS => SyntaxKind::PLUS,
+            TokenKind::MINUS => SyntaxKind::MINUS,
+            TokenKind::STAR => SyntaxKind::STAR,
+            TokenKind::SLASH => SyntaxKind::SLASH,
+            TokenKind::DSLASH => SyntaxKind::DSLASH,
+            TokenKind::PERCENT => SyntaxKind::PERCENT,
+            TokenKind::DSTAR => SyntaxKind::DSTAR,
+            TokenKind::TILDE => SyntaxKind::TILDE,
+            TokenKind::AMP => SyntaxKind::AMP,
+            TokenKind::PIPE => SyntaxKind::PIPE,
+            TokenKind::CARET => SyntaxKind::CARET,
+            TokenKind::LSHIFT => SyntaxKind::LSHIFT,
+            TokenKind::RSHIFT => SyntaxKind::RSHIFT,
+            TokenKind::EQ => SyntaxKind::EQ,
+            TokenKind::LT => SyntaxKind::LT,
+            TokenKind::GT => SyntaxKind::GT,
+            TokenKind::GE => SyntaxKind::GE,
+            TokenKind::LE => SyntaxKind::LE,
+            TokenKind::EQEQ => SyntaxKind::EQEQ,
+            TokenKind::NE => SyntaxKind::NE,
+            TokenKind::PLUSEQ => SyntaxKind::PLUSEQ,
+            TokenKind::MINUSEQ => SyntaxKind::MINUSEQ,
+            TokenKind::STAREQ => SyntaxKind::STAREQ,
+            TokenKind::SLASHEQ => SyntaxKind::SLASHEQ,
+            TokenKind::PERCENTEQ => SyntaxKind::PERCENTEQ,
+            TokenKind::AMPEQ => SyntaxKind::AMPEQ,
+            TokenKind::PIPEEQ => SyntaxKind::PIPEEQ,
+            TokenKind::CARETEQ => SyntaxKind::CARETEQ,
+            TokenKind::LSHIFTEQ => SyntaxKind::LSHIFTEQ,
+            TokenKind::RSHIFTEQ => SyntaxKind::RSHIFTEQ,
+            TokenKind::DOT => SyntaxKind::DOT,
+            TokenKind::COMMA => SyntaxKind::COMMA,
+            TokenKind::SEMICOLON => SyntaxKind::SEMICOLON,
+            TokenKind::COLON => SyntaxKind::COLON,
+            TokenKind::LPAREN => SyntaxKind::LPAREN,
+            TokenKind::RPAREN => SyntaxKind::RPAREN,
+            TokenKind::LBRACKET => SyntaxKind::LBRACKET,
+            TokenKind::RBRACKET => SyntaxKind::RBRACKET,
+            TokenKind::LBRACE => SyntaxKind::LBRACE,
+            TokenKind::RBRACE => SyntaxKind::RBRACE,
+            TokenKind::AND_KW => SyntaxKind::AND_KW,
+            TokenKind::ELSE_KW => SyntaxKind::ELSE_KW,
+            TokenKind::LOAD_KW => SyntaxKind::LOAD_KW,
+            TokenKind::BREAK_KW => SyntaxKind::BREAK_KW,
+            TokenKind::FOR_KW => SyntaxKind::FOR_KW,
+            TokenKind::NOT_KW => SyntaxKind::NOT_KW,
+            TokenKind::CONTINUE_KW => SyntaxKind::CONTINUE_KW,
+            TokenKind::IF_KW => SyntaxKind::IF_KW,
+            TokenKind::OR_KW => SyntaxKind::OR_KW,
+            TokenKind::DEF_KW => SyntaxKind::DEF_KW,
+            TokenKind::IN_KW => SyntaxKind::IN_KW,
+            TokenKind::PASS_KW => SyntaxKind::PASS_KW,
+            TokenKind::ELIF_KW => SyntaxKind::ELIF_KW,
+            TokenKind::LAMBDA_KW => SyntaxKind::LAMBDA_KW,
+            TokenKind::RETURN_KW => SyntaxKind::RETURN_KW,
+            TokenKind::IDENTIFIER => SyntaxKind::IDENTIFIER,
+            TokenKind::INT => SyntaxKind::INT,
+            TokenKind::NumericLiteral => SyntaxKind::INT,
+            TokenKind::FLOAT => SyntaxKind::FLOAT,
+            TokenKind::STRING => SyntaxKind::STRING,
+            TokenKind::BYTES => SyntaxKind::BYTES,
+            TokenKind::COMMENT => SyntaxKind::COMMENT,
+            TokenKind::WHITESPACE => SyntaxKind::WHITESPACE,
+            TokenKind::NEWLINE => SyntaxKind::NEWLINE,
+            TokenKind::INDENT => SyntaxKind::INDENT,
+            TokenKind::OUTDENT => SyntaxKind::OUTDENT,
+            TokenKind::UNKNOWN => SyntaxKind::UNKNOWN,
+            TokenKind::EOF => SyntaxKind::EOF,
+        }
+    }
 }
 
 pub fn tokenize(source: &str) -> (TokenStream, Vec<SyntaxError>) {

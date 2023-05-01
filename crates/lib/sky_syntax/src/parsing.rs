@@ -2,17 +2,21 @@ mod text_tree_sink;
 
 use crate::{
     lexer::{tokenize, Token},
-    parser::ParseError,
+    parser::{self, ParseError},
     syntax_error::SyntaxError,
     text_token_source, SyntaxKind,
 };
 use rowan::GreenNode;
 
 pub(crate) fn parse_text(text: &str) -> (GreenNode, Vec<SyntaxError>) {
+    // Tokenize the source into a token stream and a list of errors (i.e. unrecognized tokens)
     let (tokens, errors) = tokenize(text);
 
     let mut token_source = text_token_source::TextTokenSource::new(tokens.clone());
     let mut tree_sink = text_tree_sink::TextTreeSink::new(tokens);
+
+    parser::parse(&mut token_source, &mut tree_sink);
+    // let (tree, mut parser_errors) = parser::parse(&mut token_source, tree_sink);
 
     // v1
     // let tokens = tokenize(text);

@@ -1,7 +1,13 @@
+use std::cell::Cell;
+
 use crate::ast::AstNode;
+use crate::event::Event;
 pub use crate::lang::{SyntaxElement, SyntaxNode, SyntaxToken};
 use crate::lexer::{FileId, Span, Token, TokenStream};
+use crate::parsing::{TokenSource, TreeSink};
 use crate::syntax_tree::SyntaxTreeBuilder;
+use crate::token_set::TokenSet;
+use crate::T;
 use crate::{ast::SyntaxKind, lexer::TokenKind};
 use anyhow::Result;
 use codespan_reporting::files::SimpleFiles;
@@ -223,6 +229,7 @@ impl StarlarkParser {
 use codespan_reporting::diagnostic::{Diagnostic, Label};
 use typed_builder::TypedBuilder;
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ParseError {
     UnexpectedToken {
         expected: Vec<TokenKind>,
@@ -287,4 +294,120 @@ impl TextTreeSink {
             syntax_errors: Vec::new(),
         }
     }
+}
+
+// ----
+
+/// The [`Parser`] and its methods are responsible for processing and parsing tokens
+/// from a given input. The parser **does not** actually parse things itself but **provides
+/// an interface** for _advancing through the input_, _inspecting tokens_, and _constructing the syntax tree_.
+///
+/// The [`Parser`] provides a low-level **API** for navigating through a stream of [`Token`]s.
+/// and constructing the parse tree. The [`Parser`] is **not** responsible for parsing the
+/// input itself, that is handled by the [`grammar`] module.
+///
+/// The result from the parser is **not** a concrete syntax tree, but instead
+/// a stream of [`Event`]s that can be used to construct a concrete syntax tree. The events
+/// are of the form `start_expr`, `consume_token`, `finish_expr`, etc. See [`Event`] for more
+/// information.
+pub struct Parser<'t> {
+    token_source: &'t mut dyn TokenSource,
+    events: Vec<Event>,
+    steps: Cell<u32>,
+}
+
+impl<'t> Parser<'t> {
+    /// Creates a new [`Parser`] with the given [`TokenSource`].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use crate::parser::Parser;
+    /// use crate::lexer::Lexer;
+    ///
+    /// let mut token_stream = TokenStream::from("x = 5");
+    /// let mut parser = Parser::new(&mut token_stream);
+    /// ```
+    pub fn new(token_source: &'t mut dyn TokenSource) -> Self {
+        Self {
+            token_source,
+            events: Vec::new(),
+            steps: Cell::new(0),
+        }
+    }
+
+    /// Returns the [`SyntaxKind`] of the current token or **EOF** if the parser
+    /// has reached the **end** of the input.
+    pub(crate) fn current(&self) -> SyntaxKind {
+        self.nth(0)
+    }
+
+    /// Performs a **lookahead operation** and returns the [`SyntaxKind`]
+    /// of the token `n` steps ahead of the current token that the
+    /// parser is currently processing (looking at).
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n` is greater than `3`. We don't want to lookahead more than `3` tokens.
+    /// This is a **hard limit**.
+    ///
+    /// Additionally, if the parser has performed more than `10 million` steps, we assume
+    /// that the parser is stuck in an **infinite loop** and **panic**. This is an **bug** with the
+    /// parser itself and would need to be fixed.
+    pub fn nth(&self, n: usize) -> SyntaxKind {
+        assert!(n <= 3, "Cannot lookahead more than 3 tokens");
+        let steps = self.steps.get();
+        assert!(steps <= 10_000_000, "Infinite loop detected within the parser. Aborting. This is a bug. Please report it at https://github.com/pulanski/skylark/issues/new");
+        self.steps.set(steps + 1);
+
+        self.token_source.lookahead_nth(n).kind().to_syntax()
+    }
+
+    pub fn finish(self) -> Vec<Event> {
+        self.events
+    }
+
+    /// Checks if the current token is `kind`.
+    ///
+    /// This is a convenience method for performing `self.nth_at(0, kind)`
+    /// in a more ergonomic fashion.
+    pub(crate) fn at(&self, kind: SyntaxKind) -> bool {
+        self.nth_at(0, kind)
+    }
+
+    /// Checks if the token `n` steps ahead of the current token is `kind`.
+    pub(crate) fn nth_at(&self, n: usize, kind: SyntaxKind) -> bool {
+        self.token_source.lookahead_nth(n).kind().to_syntax() == kind
+    }
+
+    /// Checks if the current token is in contained within the
+    /// given [`TokenSet`], `kinds`.
+    pub(crate) fn at_ts(&self, kinds: TokenSet) -> bool {
+        kinds.contains(self.current())
+    }
+
+    // We don't have to worry about the `at_*` methods being called since we aren't
+    // gluing tokens together. The tokens are already glued together by the lexer.
+    // fn at_composite2(&self, n: usize, k1: SyntaxKind, k2: SyntaxKind) -> bool {
+    //     let t1 = self.token_source.lookahead_nth(n);
+    //     let t2 = self.token_source.lookahead_nth(n + 1);
+    //     t1.kind().to_syntax() == k1 && t1.is_jointed_to_next && t2.kind().to_syntax() == k2
+    // }
+    // fn at_composite3(&self, n: usize, k1: SyntaxKind, k2: SyntaxKind, k3: SyntaxKind) -> bool {
+    //     let t1 = self.token_source.lookahead_nth(n);
+    //     let t2 = self.token_source.lookahead_nth(n + 1);
+    //     let t3 = self.token_source.lookahead_nth(n + 2);
+    //     (t1.kind == k1 && t1.is_jointed_to_next)
+    //         && (t2.kind == k2 && t2.is_jointed_to_next)
+    //         && t3.kind == k3
+    // }
+
+    /// Checks if the current token is contextual keyword with text `t`.
+    pub(crate) fn at_contextual_kw(&self, kw: &str) -> bool {
+        self.token_source.is_keyword(kw)
+    }
+}
+
+pub fn parse(token_source: &mut dyn TokenSource, tree_sink: &mut dyn TreeSink) {
+    todo!("Parse source code into AST")
 }

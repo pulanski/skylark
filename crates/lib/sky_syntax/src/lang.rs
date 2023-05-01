@@ -5,13 +5,27 @@ use rowan::Language;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Starlark {}
 
+/// [`skylark`]'s [`Language`][crate::lang::Language] type, a wrapper around
+/// [`rowan`]'s language-agnostic [`Language`][rowan::Language] type.
+///
+/// [`Language`] is the interface [`skylark`] uses to bridge the gap between
+/// [`rowan`]'s language-agnostic [`SyntaxNode`][rowan::SyntaxNode] type and
+/// [`skylark`]'s [`SyntaxNode`][crate::lang::SyntaxNode] type.
 impl Language for Starlark {
     type Kind = SyntaxKind;
 
+    /// Get the [`SyntaxKind`] from the raw [`rowan::SyntaxKind`].
+    ///
+    /// Users of [`skylark`] should not need to call this directly and
+    /// should only need to interact with [`SyntaxKind`]s.
     fn kind_from_raw(raw: rowan::SyntaxKind) -> SyntaxKind {
         SyntaxKind::from(raw.0)
     }
 
+    /// Convert the [`SyntaxKind`] to the raw [`rowan::SyntaxKind`].
+    ///
+    /// Users of [`skylark`] should not need to call this directly and
+    /// should only need to interact with [`SyntaxKind`]s.
     fn kind_to_raw(kind: SyntaxKind) -> rowan::SyntaxKind {
         rowan::SyntaxKind(u16::from(kind))
     }

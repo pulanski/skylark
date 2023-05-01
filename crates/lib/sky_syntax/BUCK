@@ -29,6 +29,17 @@ rust_library(
     visibility = ["PUBLIC"],
 )
 
+rust_test(
+    name = "sky_syntax_test",
+    srcs = glob(["tests/**/*.rs"]),
+    edition = "2021",
+    deps = [
+        ":sky_syntax",
+        "//third-party/rust:pretty_assertions_sorted",
+    ],
+    visibility = ["PUBLIC"],
+)
+
 rust_binary(
     name = "syntaxgen",
     srcs = ["syntaxgen/src/grammar/starlark.ungram"] + glob(["src/ast/generated/*.rs"]) + glob(["syntaxgen/src/*.rs"]),

@@ -1,4 +1,5 @@
 mod ast;
+mod event;
 mod lang;
 mod lexer;
 mod logging;
