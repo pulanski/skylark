@@ -1,0 +1,10 @@
+[package]
+name = "inkwell_build"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+inkwell = { version = "0.1.1", features = ["llvm15-0"] }
+# salsa-2022 = { path = "../../../salsa/components/salsa-2022" }

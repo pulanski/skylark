@@ -1,0 +1,15 @@
+# rust_binary(
+#     name = "mini-inkwell",
+#     srcs = glob(["src/**/*.rs"]),
+#     edition = "2021",
+#     deps = [
+#         "//third-party/rust:inkwell",
+#         # "//:inkwell_build",
+#     ],
+#     # named_deps = {
+#     #     # "inkwell": "//third-party/rust:inkwell",
+#     #     "inkwell": "//:inkwell_build",
+#     # },
+#     visibility = ["PUBLIC"],
+#     link_style = "shared",
+# )

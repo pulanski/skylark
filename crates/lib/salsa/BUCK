@@ -1,0 +1,9 @@
+rust_library(
+    name = "salsa",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2021",
+    deps = [
+        "//third-party/rust:salsa",
+    ],
+    visibility = ["PUBLIC"],
+)

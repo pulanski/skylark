@@ -1,0 +1,26 @@
+[repositories]
+root = .
+prelude = prelude
+toolchains = toolchains
+none = none
+# shim = shim
+
+[repository_aliases]
+# config = prelude
+# ovr_config = prelude
+# toolchains = shim
+# fbcode = shim
+# fbcode_macros = shim
+# fbsource = shim
+# buck = shim
+config = prelude
+fbcode = none
+fbsource = none
+buck = none
+# fbcode_macros = shim
+
+[parser]
+target_platform_detector_spec = target:root//...->prelude//platforms:default
+
+[project]
+ignore = .git

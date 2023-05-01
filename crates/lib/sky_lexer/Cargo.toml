@@ -1,0 +1,52 @@
+[package]
+name = "sky_lexer"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+allocative = { workspace = true }
+anyhow = { workspace = true }
+argfile = { workspace = true }
+cargo-emit = { workspace = true }
+codespan = { workspace = true }
+codespan-reporting = { workspace = true }
+clap = { workspace = true }
+derivative = { workspace = true }
+derive-new = { workspace = true }
+derive_more = { workspace = true }
+dirs-next = { workspace = true }
+dyn-clone = { workspace = true }
+either = { workspace = true }
+getset = { workspace = true }
+humansize = { workspace = true }
+indicatif = { workspace = true }
+lazy_static = { workspace = true }
+logos = { workspace = true }
+miette = { workspace = true }
+num-derive = { workspace = true }
+num-traits = { workspace = true }
+owo-colors = { workspace = true }
+pretty_assertions_sorted = { workspace = true }
+regex = { workspace = true }
+rowan = { workspace = true }
+rstest = { workspace = true }
+shrinkwraprs = { workspace = true }
+smartstring = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+strsim = { workspace = true }
+strum_macros = { workspace = true }
+strum = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-indicatif = { workspace = true }
+tracing-subscriber = { workspace = true }
+typed-builder = { workspace = true }
+which = { workspace = true }
+ungrammar = { workspace = true }
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+itertools = { workspace = true }
+xshell = { workspace = true }

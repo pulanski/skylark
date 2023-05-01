@@ -1,0 +1,9 @@
+# rust_library(
+#     name = "inkwell",
+#     srcs = glob(["src/**/*.rs"]),
+#     edition = "2021",
+#     deps = [
+#         "//:inkwell_build",
+#     ],
+#     visibility = ["PUBLIC"],
+# )
