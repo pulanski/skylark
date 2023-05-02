@@ -4,12 +4,12 @@ cargo-features = ['named-profiles']
 resolver = "2"
 members = [
     "crates/bin/calc",
+    "crates/bin/devtools/syntaxgen",
     "crates/bin/mini-inkwell",
     "crates/lib/inkwell_build",
     "crates/lib/third-party/salsa",
     "crates/lib/skylark/sky_lexer",
     "crates/lib/skylark/sky_syntax",
-    "crates/lib/devtools/syntaxgen",
 ]
 
 [workspace.package]

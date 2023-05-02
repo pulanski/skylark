@@ -13,7 +13,7 @@ alias(
 
 alias(
     name = "syntaxgen",
-    actual = "//crates/lib/devtools/syntaxgen:syntaxgen",
+    actual = "//crates/bin/devtools/syntaxgen:syntaxgen",
 )
 
 # alias(

@@ -8,9 +8,9 @@ Rudolph is a powerful tool for managing third-party Rust dependencies in the con
 - **Embedded Reindeer executable**: Rudolph embeds Reindeer's executable, eliminating the need to download Reindeer separately.
 - **Build correctness**: Rudolph ensures the correctness of builds by running a Buck2 build when a cached buckification of the dependency graph is not found. This means incurring the extra build cost for the new dependencies up front, and then never needing it again until the next change, taking advantage of incremental builds.
 
-## Main Loop Functionality
+## Core Algorithm
 
-Rudolph's main loop consists of the following steps:
+Rudolph's core algorithm is as follows:
 
 1. **Check cache**: Rudolph checks if a cached version of the third-party dependencies is available and up-to-date. If a cached version is found, Rudolph returns early to avoid unnecessary work.
 
@@ -44,12 +44,12 @@ To use Rudolph in your Rust project, follow these steps:
 
 With Rudolph, managing third-party Rust dependencies in the context of Buck2 is seamless and efficient, leveraging the benefits of incremental builds and a global caching strategy.
 
-## Features
+<!-- ## Features -->
 
-### Easy Onboarding with Devcontainers
+<!-- ### Easy Onboarding with Devcontainers
 
 In addition to setting up a Buck2-based Rust project with third-party dependencies, the Rudolph init process also takes care of initializing everything needed for setting up Devcontainers as a development environment. This greatly simplifies the onboarding process for new developers or anyone who wants to explore the code.
 
 By utilizing Devcontainers, developers can start working on the project without needing to install Rust or Buck2 on their local machines. All that's required is Docker, as the development environment will be containerized, ensuring a consistent and easily shareable setup across different machines and developers.
 
-Once the Devcontainer is set up, developers can build and run the project within the containerized environment, making it an ideal solution for seamless collaboration and easy onboarding.
+Once the Devcontainer is set up, developers can build and run the project within the containerized environment, making it an ideal solution for seamless collaboration and easy onboarding. -->
