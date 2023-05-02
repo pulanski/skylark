@@ -1413,6 +1413,55 @@ dependencies = [
 ]
 
 [[package]]
+name = "syntaxgen"
+version = "0.1.0"
+dependencies = [
+ "allocative",
+ "anyhow",
+ "argfile",
+ "cargo-emit",
+ "clap",
+ "codespan",
+ "codespan-reporting",
+ "derivative",
+ "derive-new",
+ "derive_more",
+ "dirs-next",
+ "either",
+ "getset",
+ "humansize",
+ "indicatif",
+ "itertools 0.10.5",
+ "lazy_static",
+ "logos",
+ "miette",
+ "num-derive",
+ "num-traits",
+ "owo-colors",
+ "pretty_assertions_sorted",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "rowan",
+ "rstest",
+ "serde",
+ "serde_json",
+ "shrinkwraprs",
+ "smartstring",
+ "strsim",
+ "strum",
+ "strum_macros",
+ "thiserror",
+ "tracing",
+ "tracing-indicatif",
+ "tracing-subscriber",
+ "typed-builder",
+ "ungrammar",
+ "which",
+ "xshell",
+]
+
+[[package]]
 name = "termcolor"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

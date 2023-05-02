@@ -396,8 +396,6 @@ impl TokenSet {
     /// assert!(singleton_set.contains(SyntaxKind::Identifier));
     /// assert!(!singleton_set.contains(SyntaxKind::Keyword));
     /// ```
-    ///
-    /// [`SyntaxKind`]: crate::SyntaxKind
     pub fn singleton(kind: SyntaxKind) -> TokenSet {
         TokenSet(mask(kind))
     }
@@ -416,8 +414,6 @@ impl TokenSet {
     /// assert!(!complement_set.contains(SyntaxKind::Identifier));
     /// assert!(complement_set.contains(SyntaxKind::Keyword));
     /// ```
-    ///
-    /// [`SyntaxKind`]: crate::SyntaxKind
     pub fn complement(self) -> TokenSet {
         TokenSet(!self.0)
     }

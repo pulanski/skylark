@@ -45,17 +45,20 @@ impl File {
     pub fn parse(text: &str) -> Parse<File> {
         // todo:
         let (green, mut errors) = parsing::parse_text(text);
-        // let root = SyntaxNode::new_root(green.clone());
+        let root = SyntaxNode::new_root(green.clone());
 
         // // errors.extend(validation::validate(&root));
 
-        // assert_eq!(root.kind(), SyntaxKind::FILE);
+        assert!(
+            root.kind() == SyntaxKind::FILE,
+            "Expected to parse a file, but instead got {:?}. This is a bug in the parser and should be reported.",
+            root.kind()
+        );
 
-        // Parse {
-        //     green,
-        //     errors: Arc::new(errors),
-        //     _ty: PhantomData,
-        // }
-        todo!()
+        Parse {
+            green,
+            errors: Arc::from(errors),
+            _ty: PhantomData,
+        }
     }
 }

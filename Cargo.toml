@@ -6,9 +6,10 @@ members = [
     "crates/bin/calc",
     "crates/bin/mini-inkwell",
     "crates/lib/inkwell_build",
-    "crates/lib/salsa",
-    "crates/lib/sky_lexer",
-    "crates/lib/sky_syntax",
+    "crates/lib/third-party/salsa",
+    "crates/lib/skylark/sky_lexer",
+    "crates/lib/skylark/sky_syntax",
+    "crates/lib/devtools/syntaxgen",
 ]
 
 [workspace.package]

@@ -50,7 +50,9 @@ impl SyntaxTreeBuilder {
     }
 
     pub fn error(&mut self, error: ParseError, range: TextRange) {
-        self.errors
-            .push(SyntaxError::new("Syntax Error TODO".to_owned(), range));
+        self.errors.push(SyntaxError::new(
+            "Syntax error encountered".to_owned(),
+            range,
+        ));
     }
 }

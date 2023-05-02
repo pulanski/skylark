@@ -11,6 +11,11 @@ alias(
     actual = "//crates/bin/calc:calc",
 )
 
+alias(
+    name = "syntaxgen",
+    actual = "//crates/lib/devtools/syntaxgen:syntaxgen",
+)
+
 # alias(
 #     name = "mini-inkwell",
 #     actual = "//crates/bin/mini-inkwell:mini-inkwell",

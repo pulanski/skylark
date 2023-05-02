@@ -1,7 +1,7 @@
 [repositories]
 root = .
-prelude = prelude
-toolchains = toolchains
+prelude = tools/buck2/prelude
+toolchains = tools/buck2/toolchains
 none = none
 # shim = shim
 

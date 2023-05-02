@@ -3,7 +3,7 @@ rust_binary(
     srcs = glob(["src/**/*.rs"]),
     edition = "2021",
     deps = [
-        "//crates/lib/salsa:salsa",
+        "//crates/lib/third-party/salsa:salsa",
         "//third-party/rust:codespan",
         "//third-party/rust:codespan-reporting",
         "//third-party/rust:derive_more",

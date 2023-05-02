@@ -1,0 +1,21 @@
+rust_binary(
+    name = "syntaxgen",
+    srcs = ["src/grammar/starlark.ungram"]  + glob(["src/**/*.rs"]),
+    crate = "syntaxgen",
+    # crate_root = "syntaxgen/src/main.rs",
+    edition = "2021",
+    rustc_flags = ["--cap-lints=allow"],
+    deps = [
+        "//third-party/rust:cargo-emit",
+        "//third-party/rust:either",
+        "//third-party/rust:indicatif",
+        "//third-party/rust:itertools",
+        "//third-party/rust:proc-macro2",
+        "//third-party/rust:quote",
+        "//third-party/rust:ungrammar",
+        "//third-party/rust:tracing",
+        "//third-party/rust:tracing-subscriber",
+        "//third-party/rust:xshell",
+    ],
+    visibility = ["PUBLIC"],
+)

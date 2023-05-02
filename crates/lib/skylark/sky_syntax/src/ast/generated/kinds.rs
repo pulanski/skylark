@@ -211,9 +211,7 @@ impl SyntaxKind {
                 | RSHIFTEQ
         )
     }
-    pub fn is_literal(self) -> bool {
-        matches!(self, IDENTIFIER | INT | FLOAT | STRING | BYTES)
-    }
+    pub fn is_literal(self) -> bool { matches!(self, IDENTIFIER | INT | FLOAT | STRING | BYTES) }
     pub fn from_keyword(ident: &str) -> Option<SyntaxKind> {
         let kw = match ident {
             "and" => AND_KW,
@@ -334,13 +332,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::FLOAT => FLOAT,
             TokenKind::STRING => STRING,
             TokenKind::BYTES => BYTES,
-            TokenKind::WHITESPACE => WHITESPACE,
-            TokenKind::COMMENT => COMMENT,
-            TokenKind::EOF => EOF,
-            TokenKind::UNKNOWN => UNKNOWN,
-            _ => {
-                unreachable!("Unknown token kind: {:?}", kind);
-            }
+            _ => unreachable!(),
         }
     }
 }
