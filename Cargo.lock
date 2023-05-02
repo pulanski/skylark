@@ -1285,7 +1285,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sky_parser"
+name = "sky_syntax"
 version = "0.1.0"
 dependencies = [
  "allocative",

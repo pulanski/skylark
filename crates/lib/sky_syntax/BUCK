@@ -36,6 +36,7 @@ rust_test(
     deps = [
         ":sky_syntax",
         "//third-party/rust:pretty_assertions_sorted",
+        "//third-party/rust:rstest",
     ],
     visibility = ["PUBLIC"],
 )

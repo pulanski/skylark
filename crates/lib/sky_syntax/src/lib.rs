@@ -13,10 +13,11 @@ mod token_set;
 pub use crate::{
     ast::SyntaxKind,
     lang::{SyntaxNode, SyntaxToken},
-    lexer::{StarlarkLexer, TokenSink},
+    lexer::{StarlarkLexer, TokenKind, TokenSink},
     logging::init_logging,
     parser::StarlarkParser,
     parser::TextTreeSink,
+    token_set::TokenSet,
 };
 use ast::AstNode;
 use rowan::GreenNode;

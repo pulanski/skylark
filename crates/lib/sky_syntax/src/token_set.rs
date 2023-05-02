@@ -33,9 +33,9 @@ use crate::{lexer::TokenKind, SyntaxKind};
 /// [`SyntaxKind`]s. It is designed for performance and provides many utility APIs for _quickly
 /// checking_ **membership**, **union**, **intersection**, and **other set operations**.
 #[derive(Clone, Copy)]
-pub(crate) struct TokenSet(u128);
+pub struct TokenSet(u128);
 
-impl From<&[TokenKind]> for TokenSet {
+impl From<Vec<TokenKind>> for TokenSet {
     /// Creates a new [`TokenSet`] containing the given [`TokenKind`]s.
     ///
     /// # Example
@@ -48,7 +48,7 @@ impl From<&[TokenKind]> for TokenSet {
     /// assert!(set.contains(TokenKind::Identifier));
     /// assert!(set.contains(TokenKind::Keyword));
     /// ```
-    fn from(kinds: &[TokenKind]) -> Self {
+    fn from(kinds: Vec<TokenKind>) -> Self {
         let mut res = 0u128;
         let mut i = 0;
         while i < kinds.len() {
@@ -61,7 +61,7 @@ impl From<&[TokenKind]> for TokenSet {
 
 impl TokenSet {
     /// An empty `TokenSet`.
-    pub(crate) const EMPTY: TokenSet = TokenSet(0);
+    pub const EMPTY: TokenSet = TokenSet(0);
 
     /// Creates a new [`TokenSet`] containing the given [`SyntaxKind`]s.
     ///
@@ -75,7 +75,7 @@ impl TokenSet {
     /// assert!(set.contains(SyntaxKind::Identifier));
     /// assert!(set.contains(SyntaxKind::Keyword));
     /// ```
-    pub(crate) const fn new(kinds: &[SyntaxKind]) -> TokenSet {
+    pub const fn new(kinds: &[SyntaxKind]) -> TokenSet {
         let mut res = 0u128;
         let mut i = 0;
         while i < kinds.len() {
@@ -101,7 +101,7 @@ impl TokenSet {
     /// assert!(union_set.contains(SyntaxKind::Punctuation));
     /// assert!(union_set.contains(SyntaxKind::Keyword));
     /// ```
-    pub(crate) const fn union(self, other: TokenSet) -> TokenSet {
+    pub const fn union(self, other: TokenSet) -> TokenSet {
         TokenSet(self.0 | other.0)
     }
 
@@ -117,7 +117,7 @@ impl TokenSet {
     /// assert!(set.contains(SyntaxKind::Identifier));
     /// assert!(!set.contains(SyntaxKind::Punctuation));
     /// ```
-    pub(crate) const fn contains(&self, kind: SyntaxKind) -> bool {
+    pub const fn contains(&self, kind: SyntaxKind) -> bool {
         self.0 & mask(kind) != 0
     }
 
@@ -133,7 +133,7 @@ impl TokenSet {
     /// assert!(set.contains(SyntaxKind::Identifier));
     /// assert!(set.contains(SyntaxKind::Keyword));
     /// ```
-    pub(crate) fn merge(&mut self, kind: SyntaxKind) {
+    pub fn merge(&mut self, kind: SyntaxKind) {
         self.0 |= mask(kind);
     }
 
@@ -147,7 +147,7 @@ impl TokenSet {
     /// let empty_set = TokenSet::EMPTY;
     /// assert!(empty_set.is_empty());
     /// ```
-    pub(crate) fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.0 == 0
     }
 
@@ -166,7 +166,7 @@ impl TokenSet {
     /// assert_eq!(iter.next(), Some(SyntaxKind::Keyword));
     /// assert_eq!(iter.next(), None);
     /// ```
-    pub(crate) fn kinds(self) -> impl Iterator<Item = SyntaxKind> {
+    pub fn kinds(self) -> impl Iterator<Item = SyntaxKind> {
         (0..=SyntaxKind::__LAST.into())
             .map(SyntaxKind::from)
             .filter(move |it| self.contains(*it))
@@ -174,7 +174,7 @@ impl TokenSet {
 
     /// An **alias** for the [`kinds`] method, which returns an **iterator** over the [`SyntaxKind`]s
     /// in the [`TokenSet`].
-    pub(crate) fn iter(self) -> impl Iterator<Item = SyntaxKind> {
+    pub fn iter(self) -> impl Iterator<Item = SyntaxKind> {
         self.kinds()
     }
 
@@ -192,7 +192,7 @@ impl TokenSet {
     /// assert!(set1.is_subset(set2));
     /// assert!(!set2.is_subset(set1));
     /// ```
-    pub(crate) fn is_subset(&self, other: TokenSet) -> bool {
+    pub fn is_subset(&self, other: TokenSet) -> bool {
         (self.0 & other.0) == self.0
     }
 
@@ -209,7 +209,7 @@ impl TokenSet {
     ///
     /// assert!(set1.is_disjoint(set2));
     /// ```
-    pub(crate) fn is_disjoint(&self, other: TokenSet) -> bool {
+    pub fn is_disjoint(&self, other: TokenSet) -> bool {
         (self.0 & other.0) == 0
     }
 
@@ -230,7 +230,7 @@ impl TokenSet {
     /// assert!(intersection_set.contains(SyntaxKind::Keyword));
     /// assert!(!intersection_set.contains(SyntaxKind::Punctuation));
     /// ```
-    pub(crate) fn intersection(&self, other: TokenSet) -> TokenSet {
+    pub fn intersection(&self, other: TokenSet) -> TokenSet {
         TokenSet(self.0 & other.0)
     }
 
@@ -249,7 +249,7 @@ impl TokenSet {
     /// assert!(set1.contains(SyntaxKind::Identifier));
     /// assert!(!set1.contains(SyntaxKind::Keyword));
     /// ```
-    pub(crate) fn remove(&mut self, other: TokenSet) {
+    pub fn remove(&mut self, other: TokenSet) {
         self.0 &= !other.0;
     }
 
@@ -268,8 +268,54 @@ impl TokenSet {
     /// assert!(set1.contains(SyntaxKind::Identifier));
     /// assert!(set1.contains(SyntaxKind::Keyword));
     /// ```
-    pub(crate) fn insert(&mut self, other: TokenSet) {
+    pub fn insert(&mut self, other: TokenSet) {
         self.0 |= other.0;
+    }
+
+    /// Returns a new [`TokenSet`] containing the
+    /// difference of `self` and `other`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use crate::TokenSet;
+    /// use crate::SyntaxKind;
+    ///
+    /// let set1 = TokenSet::new(&[SyntaxKind::Identifier, SyntaxKind::Keyword]);
+    /// let set2 = TokenSet::new(&[SyntaxKind::Keyword, SyntaxKind::Punctuation]);
+    ///
+    /// let difference_set = set1.difference(set2);
+    /// assert!(difference_set.contains(SyntaxKind::Identifier));
+    /// assert!(!difference_set.contains(SyntaxKind::Keyword));
+    /// assert!(!difference_set.contains(SyntaxKind::Punctuation));
+    /// ```
+    pub fn difference(&self, other: TokenSet) -> TokenSet {
+        TokenSet(self.0 & !other.0)
+    }
+
+    /// Returns a new [`TokenSet`] containing the
+    /// symmetric difference of `self` and `other`.
+    ///
+    /// The symmetric difference of two sets is the set of elements which are in either of the sets
+    /// but not in their intersection.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use crate::TokenSet;
+    /// use crate::SyntaxKind;
+    ///
+    /// let set1 = TokenSet::new(&[SyntaxKind::Identifier, SyntaxKind::Keyword]);
+    /// let set2 = TokenSet::new(&[SyntaxKind::Keyword, SyntaxKind::Punctuation]);
+    ///
+    /// let symmetric_difference_set = set1.symmetric_difference(set2);
+    ///
+    /// assert!(symmetric_difference_set.contains(SyntaxKind::Identifier));
+    /// assert!(!symmetric_difference_set.contains(SyntaxKind::Keyword));
+    /// assert!(symmetric_difference_set.contains(SyntaxKind::Punctuation));
+    /// ```
+    pub fn symmetric_difference(&self, other: TokenSet) -> TokenSet {
+        TokenSet(self.0 ^ other.0)
     }
 
     /// Toggles the elements of `other` in `self`.
@@ -291,7 +337,7 @@ impl TokenSet {
     /// assert!(!set1.contains(SyntaxKind::Keyword));
     /// assert!(set1.contains(SyntaxKind::Punctuation));
     /// ```
-    pub(crate) fn toggle(&mut self, other: TokenSet) {
+    pub fn toggle(&mut self, other: TokenSet) {
         self.0 ^= other.0;
     }
 
@@ -316,7 +362,7 @@ impl TokenSet {
     /// assert!(!set.contains(SyntaxKind::Identifier));
     /// assert!(set.contains(SyntaxKind::Keyword));
     /// ```
-    pub(crate) fn toggle_kind(&mut self, kind: SyntaxKind) {
+    pub fn toggle_kind(&mut self, kind: SyntaxKind) {
         self.0 ^= mask(kind);
     }
 
@@ -334,7 +380,7 @@ impl TokenSet {
     /// assert!(set1.is_superset(set2));
     /// assert!(!set2.is_superset(set1));
     /// ```
-    pub(crate) fn is_superset(&self, other: TokenSet) -> bool {
+    pub fn is_superset(&self, other: TokenSet) -> bool {
         (self.0 & other.0) == other.0
     }
 
@@ -352,7 +398,7 @@ impl TokenSet {
     /// ```
     ///
     /// [`SyntaxKind`]: crate::SyntaxKind
-    pub(crate) fn singleton(kind: SyntaxKind) -> TokenSet {
+    pub fn singleton(kind: SyntaxKind) -> TokenSet {
         TokenSet(mask(kind))
     }
 
@@ -372,7 +418,7 @@ impl TokenSet {
     /// ```
     ///
     /// [`SyntaxKind`]: crate::SyntaxKind
-    pub(crate) fn complement(self) -> TokenSet {
+    pub fn complement(self) -> TokenSet {
         TokenSet(!self.0)
     }
 
@@ -392,7 +438,7 @@ impl TokenSet {
     /// ```
     ///
     /// [`SyntaxKind`]: crate::SyntaxKind
-    pub(crate) fn is_singleton(self) -> bool {
+    pub fn is_singleton(self) -> bool {
         self.0 != 0 && (self.0 & (self.0 - 1)) == 0
     }
 
@@ -413,7 +459,7 @@ impl TokenSet {
     /// ```
     ///
     /// [`SyntaxKind`]: crate::SyntaxKind
-    pub(crate) fn count(self) -> u32 {
+    pub fn count(self) -> u32 {
         self.0.count_ones()
     }
 
@@ -434,13 +480,17 @@ impl TokenSet {
     /// ```
     ///
     /// [`SyntaxKind`]: crate::SyntaxKind
-    pub(crate) fn take(&mut self) -> TokenSet {
+    pub fn take(&mut self) -> TokenSet {
         let res = *self;
         *self = TokenSet::EMPTY;
         res
     }
 }
 
+/// **Mask** for a single [`SyntaxKind`] in a `TokenSet`.
+/// This operation is used to efficiently store a set of [`SyntaxKind`]s in a [`TokenSet`].
+#[inline]
+#[must_use]
 const fn mask(kind: SyntaxKind) -> u128 {
     debug_assert!(
         kind as usize <= SyntaxKind::__LAST as usize,
