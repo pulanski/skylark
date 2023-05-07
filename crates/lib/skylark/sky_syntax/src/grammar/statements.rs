@@ -296,8 +296,8 @@ pub(super) fn for_stmt(p: &mut Parser) {
 /// return x # another simple statement
 /// ```
 pub(super) fn simple_stmt(p: &mut Parser) {
-    let m = p.start();
     // TODO: may need to fix
+    let m = p.start();
 
     small_stmt(p);
     while p.eat(T![;]) {
@@ -306,6 +306,7 @@ pub(super) fn simple_stmt(p: &mut Parser) {
         }
         small_stmt(p);
     }
+
     m.complete(p, SIMPLE_STMT);
 }
 
@@ -391,8 +392,8 @@ pub(super) fn small_stmt(p: &mut Parser) {
 pub(super) fn return_stmt(p: &mut Parser) {
     assert!(p.at(T![return])); // precondition (enforced by caller)
     let m = p.start();
-    p.bump(T![return]);
 
+    p.bump(T![return]);
     if !p.at(T![newline]) {
         expr::expression(p);
     }
@@ -420,7 +421,9 @@ pub(super) fn return_stmt(p: &mut Parser) {
 fn break_stmt(p: &mut Parser) {
     assert!(p.at(T![break])); // precondition (enforced by caller)
     let m = p.start();
+
     p.bump(T![break]);
+
     m.complete(p, BREAK_STMT);
 }
 
@@ -444,7 +447,9 @@ fn break_stmt(p: &mut Parser) {
 fn continue_stmt(p: &mut Parser) -> CompletedMarker {
     assert!(p.at(T![continue])); // precondition (enforced by caller)
     let m = p.start();
+
     p.bump(T![continue]);
+
     m.complete(p, CONTINUE_STMT)
 }
 
@@ -470,7 +475,9 @@ fn continue_stmt(p: &mut Parser) -> CompletedMarker {
 fn pass_stmt(p: &mut Parser) {
     assert!(p.at(T![pass])); // precondition (enforced by caller)
     let m = p.start();
+
     p.bump(T![pass]);
+
     m.complete(p, PASS_STMT);
 }
 
@@ -502,8 +509,8 @@ fn assign_stmt(p: &mut Parser) -> CompletedMarker {
         assert!(p.at_ts(ASSIGNMENT_OPERATOR));
         p.bump_any();
     }
-
     expr::expression(p);
+
     m.complete(p, ASSIGN_STMT)
 }
 
@@ -525,7 +532,9 @@ fn assign_stmt(p: &mut Parser) -> CompletedMarker {
 /// ```
 fn expr_stmt(p: &mut Parser) -> CompletedMarker {
     let m = p.start();
+
     expr::expression(p);
+
     m.complete(p, EXPR_STMT)
 }
 
@@ -548,10 +557,10 @@ fn expr_stmt(p: &mut Parser) -> CompletedMarker {
 /// ```
 fn load_stmt(p: &mut Parser) {
     let m = p.start();
+
     p.bump(T![load]);
     p.expect(T!['(']);
     p.expect(T![string]);
-
     while p.eat(T![,]) {
         if p.at(T![identifier]) {
             p.bump(T![identifier]);
@@ -559,9 +568,9 @@ fn load_stmt(p: &mut Parser) {
         }
         p.expect(T![string]);
     }
-
     p.eat(T![,]);
     p.expect(T![')']);
+
     m.complete(p, LOAD_STMT);
 }
 

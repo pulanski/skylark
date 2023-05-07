@@ -1,8 +1,9 @@
-use crate::{parser::Parser, SyntaxKind, T};
-
+mod comprehension;
 mod decl;
 mod expr;
 mod statements;
+
+use crate::{parser::Parser, SyntaxKind, T};
 
 /// The **root** of a **Starlark file**. In Starlark, **files** are
 /// the **root** of the **syntax tree**.

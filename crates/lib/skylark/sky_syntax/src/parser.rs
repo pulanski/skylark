@@ -8,7 +8,7 @@ use crate::parsing::{TokenSource, TreeSink};
 use crate::syntax_tree::SyntaxTreeBuilder;
 use crate::token_set::TokenSet;
 use crate::{ast::SyntaxKind::*, lexer::TokenKind};
-use crate::{grammar, SyntaxKind, T};
+use crate::{grammar, SyntaxKind};
 use anyhow::Result;
 use codespan_reporting::files::SimpleFiles;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};

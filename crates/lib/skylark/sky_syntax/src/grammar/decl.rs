@@ -7,8 +7,7 @@ pub(super) const DECLARATION_RECOVERY_SET: TokenSet =
 
 /// Represents **one or more** variables in a **loop statement**.
 ///
-/// See [`statements::for_stmt`] and [`statements::comp_clause`]
-/// for usage examples.
+/// See [`expr::primary_expr`] for more information.
 ///
 /// ## Ungrammar
 ///
@@ -34,6 +33,9 @@ pub(super) fn loop_variables(p: &mut Parser) {
 }
 
 /// A **suite of statements**, either indented or a **simple statement**.
+///
+/// See [`statements::simple_stmt`] and [`statements::statement`] for more
+/// information.
 ///
 /// ## Ungrammar
 ///
