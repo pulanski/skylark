@@ -34,6 +34,7 @@
 
 mod ast;
 mod event;
+mod grammar;
 mod lang;
 mod lexer;
 mod logging;
@@ -45,6 +46,7 @@ mod text_token_source;
 mod token_set;
 
 pub use crate::{
+    ast::File,
     ast::SyntaxKind,
     lang::{SyntaxNode, SyntaxToken},
     lexer::{StarlarkLexer, TokenKind, TokenSink},

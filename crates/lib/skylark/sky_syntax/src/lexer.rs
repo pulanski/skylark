@@ -1,3 +1,6 @@
+#![allow(unused)]
+
+use crate::{syntax_error::SyntaxError, SyntaxKind};
 use anyhow::{anyhow, Result};
 use codespan_reporting::{
     diagnostic::{Diagnostic, Label},
@@ -10,18 +13,36 @@ use codespan_reporting::{
 use derive_more::Display;
 use getset::{Getters, MutGetters, Setters};
 use itertools::Itertools;
+use lazy_static::lazy_static;
 use logos::Logos;
 use owo_colors::OwoColorize;
 use std::{
-    fmt::{self, Display},
-    fs::File,
-    io::Read,
+    fmt::{self, write, Debug, Display},
+    fs::{self, create_dir_all, File, OpenOptions},
+    io::{Read, Write},
     ops::Range,
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 use typed_builder::TypedBuilder;
 
-use crate::{syntax_error::SyntaxError, SyntaxKind};
+lazy_static! {
+    pub static ref STDIN_PATH: PathBuf = dirs_next::cache_dir()
+        .expect("Unable to find cache dir")
+        .join("sky_lexer")
+        .join("STDIN");
+}
+
+impl AsRef<Path> for STDIN_PATH {
+    fn as_ref(&self) -> &Path {
+        self
+    }
+}
+
+impl Debug for STDIN_PATH {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_string_lossy())
+    }
+}
 
 pub type FileId = usize;
 
@@ -34,11 +55,11 @@ pub struct Span {
 
 use rowan::{TextRange, TextSize};
 
-impl Into<TextRange> for Span {
-    fn into(self) -> TextRange {
+impl From<Span> for TextRange {
+    fn from(val: Span) -> Self {
         TextRange::new(
-            TextSize::from(self.start as u32),
-            TextSize::from(self.end as u32),
+            TextSize::from(val.start as u32),
+            TextSize::from(val.end as u32),
         )
     }
 }
@@ -148,15 +169,28 @@ pub struct TokenStream {
 
 impl TokenStream {
     fn new(file_id: FileId, file_name: PathBuf) -> Self {
-        let mut file = File::open(&file_name).unwrap();
+        let mut file = File::open(&file_name).expect("Unable to open file for lexing");
         let mut text = String::new();
-        file.read_to_string(&mut text).unwrap();
+        file.read_to_string(&mut text)
+            .expect("Unable to read file for lexing");
 
         Self {
             tokens: Vec::new(),
             cursor: 0,
             file_id,
             file_name,
+            text,
+        }
+    }
+
+    fn from_db_file(file_id: FileId, db_file: SimpleFile<&str, String>) -> Self {
+        let text = db_file.source().to_string();
+
+        Self {
+            tokens: Vec::new(),
+            cursor: 0,
+            file_id,
+            file_name: db_file.name().into(),
             text,
         }
     }
@@ -229,6 +263,16 @@ impl TokenStream {
     pub fn bump(&mut self) -> Option<&Token> {
         self.advance()
     }
+
+    pub fn empty_stream() -> Self {
+        Self {
+            text: String::new(),
+            tokens: Vec::new(),
+            cursor: 0,
+            file_id: 0,
+            file_name: "empty_stream".into(),
+        }
+    }
 }
 
 impl Iterator for TokenStream {
@@ -255,12 +299,14 @@ impl Display for TokenStream {
 impl From<&str> for TokenStream {
     fn from(input: &str) -> Self {
         let mut files = SimpleFiles::new();
+
         let file_id = files.add("STDIN", input.to_string());
         let file_name = PathBuf::from("STDIN");
+        let file = files.get(file_id).expect("Failed to get file from db");
 
-        let token_sink = TokenSink::new(file_id, file_name.clone());
+        let token_sink = TokenSink::from_db_file(file_id, file);
         let mut lexer = StarlarkLexer::new();
-        lexer.lex(file_id).expect("Failed to lex input");
+        lexer.lex_db_file(file_id).expect("Failed to lex input");
 
         let tokens = token_sink.tokens.collect_vec();
         Self {
@@ -281,15 +327,18 @@ pub struct StarlarkLexer {
     token_sink: TokenSink,
 }
 
+impl Default for StarlarkLexer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StarlarkLexer {
     pub fn new() -> Self {
         let mut files = SimpleFiles::new();
-        let file_ids = Vec::new();
+        let mut file_ids = Vec::new();
 
-        // Lexer is initialized with a single file, STDIN
-        let stdin = PathBuf::from("STDIN");
-        let file_id = files.add(stdin.to_string_lossy().to_string(), String::new());
-        let token_sink = TokenSink::new(file_id, stdin);
+        let token_sink = TokenSink::empty_sink();
 
         Self {
             files,
@@ -302,21 +351,23 @@ impl StarlarkLexer {
         self.token_sink.lexical_errors().len()
     }
 
-    pub fn from_str(input: &str) -> (Self, FileId) {
-        let file = PathBuf::from("STDIN");
+    // FIXME: This should be refactored or removed
+    // #[allow(clippy::should_implement_trait)]
+    // pub fn from_str(input: &str) -> (Self, FileId) {
+    //     let mut files = SimpleFiles::new();
+    //     let file = PathBuf::from(STDIN_PATH);
 
-        let mut files = SimpleFiles::new();
-        let file_id = files.add(file.to_string_lossy().to_string(), input.to_string());
+    //     let file_id = files.add(file.to_string_lossy().to_string(), input.to_string());
 
-        (
-            Self {
-                files,
-                file_ids: vec![file_id],
-                token_sink: TokenSink::new(file_id, file),
-            },
-            file_id,
-        )
-    }
+    //     (
+    //         Self {
+    //             files,
+    //             file_ids: vec![file_id],
+    //             token_sink: TokenSink::new(file_id, file),
+    //         },
+    //         file_id,
+    //     )
+    // }
 
     pub fn from_file(path: PathBuf) -> Result<(Self, FileId)> {
         let mut file = File::open(path.clone())?;
@@ -351,10 +402,12 @@ impl StarlarkLexer {
         Ok(file_id)
     }
 
-    pub fn lex(&mut self, file_id: FileId) -> Result<TokenSink> {
+    pub fn lex_db_file(&mut self, file_id: FileId) -> Result<TokenSink> {
         let file = self.files.get(file_id)?;
 
         let input = file.source();
+
+        println!("input: {}", input);
 
         let mut lexer = TokenKind::lexer(input);
         let mut token_sink = TokenSink::new(file_id, file.name().to_string().into());
@@ -427,7 +480,7 @@ impl StarlarkLexer {
         Ok(token_sink)
     }
 
-    pub fn emit_errors(&self) -> Result<()> {
+    pub fn emit_errors(&self) {
         let mut writer = StandardStream::stderr(ColorChoice::Always);
         let config = codespan_reporting::term::Config::default();
 
@@ -437,7 +490,7 @@ impl StarlarkLexer {
         );
 
         for error in self.token_sink.lexical_errors() {
-            term::emit(&mut writer, &config, self.files(), error)?;
+            term::emit(&mut writer, &config, self.files(), error).expect("Could not emit error");
         }
 
         tracing::info!(
@@ -445,16 +498,153 @@ impl StarlarkLexer {
             self.token_sink.lexical_errors().len()
         );
 
-        Ok(())
+        // Ok(())
     }
 
-    fn get_file(&self, file_id: usize) -> Result<&SimpleFile<String, String>> {
+    fn get_db_file(&self, file_id: usize) -> Result<&SimpleFile<String, String>> {
         if let Ok(file) = self.files.get(file_id) {
             Ok(file)
         } else {
             Err(anyhow!("File not found"))
             // Err(SkylarkError::FileNotFound(file_id).into())
         }
+    }
+
+    pub fn tokenize(&mut self, source: &str) -> TokenSink {
+        // Create all intermediate directories if they don't exist
+        let stdin_path = STDIN_PATH.as_os_str();
+        let parent_dir = Path::new(&stdin_path)
+            .parent()
+            .expect("Failed to get parent directory");
+
+        fs::create_dir_all(parent_dir).expect("Failed to create intermediate directories");
+
+        // Create the file if it doesn't already exist, otherwise truncate it
+        let mut file = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&STDIN_PATH)
+            .expect("Could not open <STDIN>. This is a bug and should be reported.");
+
+        // let mut file_id = self.files.add(
+        //     STDIN_PATH.to_path_buf().to_string_lossy().to_string(),
+        //     String::new(),
+        // );
+        // get the last segment of STDIN_PATH
+        let stdin = STDIN_PATH
+            .file_name()
+            .expect("Failed to get file name")
+            .to_str()
+            .expect("Failed to convert file name to str");
+
+        let mut file_id = self.files.add(stdin.to_string(), source.to_string());
+
+        // create file if it doesn't already exist, otherwise truncate it
+        let mut stdin = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&STDIN_PATH)
+            .expect("Could not open <STDIN>. This is a bug and should be reported.");
+
+        // write the source to the file
+        stdin.write_all(source.as_bytes());
+
+        // let token_sink = self.lex_db_file(file_id).expect("Unable to lex source.");
+
+        // self.set_token_sink(token_sink.clone());
+
+        // token_sink
+
+        let mut lexer = TokenKind::lexer(source);
+        // let file_id = self.file_ids[0];
+        // assert!(
+        //     self.file_ids.len() == 1,
+        //     "Only supported for STDIN/string literal use case"
+        // );
+
+        // create file if it doesn't already exist, otherwise truncate it
+        let mut stdin = OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&STDIN_PATH)
+            .expect("Could not open <STDIN>. This is a bug and should be reported.");
+
+        // write the source to the file
+        stdin.write_all(source.as_bytes());
+
+        let mut token_sink = TokenSink::new(file_id, STDIN_PATH.to_path_buf());
+        let mut current_unknown_token: Option<Token> = None;
+
+        while let Some(token_result) = lexer.next() {
+            match token_result {
+                Ok(token) => {
+                    if let Some(unknown_token) = current_unknown_token.clone() {
+                        token_sink
+                            .lexical_errors
+                            .push(create_unknown_token_diagnostic(file_id, &unknown_token));
+                        token_sink.tokens.push(unknown_token);
+                        current_unknown_token = None;
+                    }
+
+                    token_sink.tokens.push(Token::new(
+                        token,
+                        lexer.slice().to_string(),
+                        lexer.span().into(),
+                    ));
+                }
+                Err(()) => {
+                    if let Some(unknown_token) = current_unknown_token.clone() {
+                        let Token {
+                            kind: _,
+                            span,
+                            lexeme,
+                        } = unknown_token;
+
+                        let span = span.merge(lexer.span());
+                        let updated_lexeme = format!("{}{}", lexeme, lexer.slice());
+
+                        tracing::debug!(
+                            "Gluing together unknown tokens {} and {} to form {} at {}",
+                            lexeme,
+                            lexer.slice(),
+                            updated_lexeme,
+                            span
+                        );
+
+                        current_unknown_token =
+                            Some(Token::new(TokenKind::UNKNOWN, updated_lexeme, span));
+                    } else {
+                        tracing::debug!(
+                            "Creating new unknown token {} at {:?}",
+                            lexer.slice(),
+                            lexer.span()
+                        );
+
+                        current_unknown_token = Some(Token::new(
+                            TokenKind::UNKNOWN,
+                            lexer.slice().to_string(),
+                            lexer.span().into(),
+                        ));
+                    }
+                }
+            }
+        }
+
+        token_sink.tokens.push(Token::new(
+            TokenKind::EOF,
+            "".to_string(),
+            lexer.span().into(),
+        ));
+
+        self.set_token_sink(token_sink.clone());
+
+        token_sink
     }
 }
 
@@ -534,6 +724,20 @@ impl TokenSink {
         }
     }
 
+    pub fn empty_sink() -> Self {
+        Self {
+            tokens: TokenStream::empty_stream(),
+            lexical_errors: Vec::new(),
+        }
+    }
+
+    pub fn from_db_file(file_id: FileId, db_file: &SimpleFile<&str, String>) -> Self {
+        Self {
+            tokens: TokenStream::from_db_file(file_id, db_file.clone()),
+            lexical_errors: Vec::new(),
+        }
+    }
+
     pub fn has_errors(&self) -> bool {
         !self.lexical_errors.is_empty()
     }
@@ -598,6 +802,8 @@ pub enum TokenKind {
     STAREQ,
     #[token("/=")]
     SLASHEQ,
+    #[token("//=")]
+    DSLASHEQ,
     #[token("%=")]
     PERCENTEQ,
     #[token("&=")]
@@ -768,23 +974,149 @@ impl TokenKind {
             TokenKind::OUTDENT => SyntaxKind::OUTDENT,
             TokenKind::UNKNOWN => SyntaxKind::UNKNOWN,
             TokenKind::EOF => SyntaxKind::EOF,
+            TokenKind::DSLASHEQ => SyntaxKind::SLASHEQ, // TODO: FIX ME (this is a placeholder for now as need to fix syntaxgen)
+        }
+    }
+}
+
+impl From<&SyntaxKind> for TokenKind {
+    fn from(kind: &SyntaxKind) -> Self {
+        match kind {
+            SyntaxKind::PLUS => TokenKind::PLUS,
+            SyntaxKind::MINUS => TokenKind::MINUS,
+            SyntaxKind::STAR => TokenKind::STAR,
+            SyntaxKind::SLASH => TokenKind::SLASH,
+            SyntaxKind::DSLASH => TokenKind::DSLASH,
+            SyntaxKind::PERCENT => TokenKind::PERCENT,
+            SyntaxKind::DSTAR => TokenKind::DSTAR,
+            SyntaxKind::TILDE => TokenKind::TILDE,
+            SyntaxKind::AMP => TokenKind::AMP,
+            SyntaxKind::PIPE => TokenKind::PIPE,
+            SyntaxKind::CARET => TokenKind::CARET,
+            SyntaxKind::LSHIFT => TokenKind::LSHIFT,
+            SyntaxKind::RSHIFT => TokenKind::RSHIFT,
+            SyntaxKind::EQ => TokenKind::EQ,
+            SyntaxKind::LT => TokenKind::LT,
+            SyntaxKind::GT => TokenKind::GT,
+            SyntaxKind::GE => TokenKind::GE,
+            SyntaxKind::LE => TokenKind::LE,
+            SyntaxKind::EQEQ => TokenKind::EQEQ,
+            SyntaxKind::NE => TokenKind::NE,
+            SyntaxKind::PLUSEQ => TokenKind::PLUSEQ,
+            SyntaxKind::MINUSEQ => TokenKind::MINUSEQ,
+            SyntaxKind::STAREQ => TokenKind::STAREQ,
+            SyntaxKind::SLASHEQ => TokenKind::SLASHEQ,
+            SyntaxKind::PERCENTEQ => TokenKind::PERCENTEQ,
+            SyntaxKind::AMPEQ => TokenKind::AMPEQ,
+            SyntaxKind::PIPEEQ => TokenKind::PIPEEQ,
+            SyntaxKind::CARETEQ => TokenKind::CARETEQ,
+            SyntaxKind::LSHIFTEQ => TokenKind::LSHIFTEQ,
+            SyntaxKind::RSHIFTEQ => TokenKind::RSHIFTEQ,
+            SyntaxKind::DOT => TokenKind::DOT,
+            SyntaxKind::COMMA => TokenKind::COMMA,
+            SyntaxKind::SEMICOLON => TokenKind::SEMICOLON,
+            SyntaxKind::COLON => TokenKind::COLON,
+            SyntaxKind::LPAREN => TokenKind::LPAREN,
+            SyntaxKind::RPAREN => TokenKind::RPAREN,
+            SyntaxKind::LBRACKET => TokenKind::LBRACKET,
+            SyntaxKind::RBRACKET => TokenKind::RBRACKET,
+            SyntaxKind::LBRACE => TokenKind::LBRACE,
+            SyntaxKind::RBRACE => TokenKind::RBRACE,
+            SyntaxKind::AND_KW => TokenKind::AND_KW,
+            SyntaxKind::ELSE_KW => TokenKind::ELSE_KW,
+            SyntaxKind::LOAD_KW => TokenKind::LOAD_KW,
+            SyntaxKind::BREAK_KW => TokenKind::BREAK_KW,
+            SyntaxKind::FOR_KW => TokenKind::FOR_KW,
+            SyntaxKind::NOT_KW => TokenKind::NOT_KW,
+            SyntaxKind::CONTINUE_KW => TokenKind::CONTINUE_KW,
+            SyntaxKind::IF_KW => TokenKind::IF_KW,
+            SyntaxKind::OR_KW => TokenKind::OR_KW,
+            SyntaxKind::DEF_KW => TokenKind::DEF_KW,
+            SyntaxKind::IN_KW => TokenKind::IN_KW,
+            SyntaxKind::PASS_KW => TokenKind::PASS_KW,
+            SyntaxKind::ELIF_KW => TokenKind::ELIF_KW,
+            SyntaxKind::LAMBDA_KW => TokenKind::LAMBDA_KW,
+            SyntaxKind::RETURN_KW => TokenKind::RETURN_KW,
+            SyntaxKind::IDENTIFIER => TokenKind::IDENTIFIER,
+            SyntaxKind::INT => TokenKind::INT,
+            SyntaxKind::FLOAT => TokenKind::FLOAT,
+            SyntaxKind::STRING => TokenKind::STRING,
+            SyntaxKind::BYTES => TokenKind::BYTES,
+            SyntaxKind::COMMENT => TokenKind::COMMENT,
+            SyntaxKind::WHITESPACE => TokenKind::WHITESPACE,
+            SyntaxKind::NEWLINE => TokenKind::NEWLINE,
+            SyntaxKind::INDENT => TokenKind::INDENT,
+            SyntaxKind::OUTDENT => TokenKind::OUTDENT,
+            SyntaxKind::UNKNOWN => TokenKind::UNKNOWN,
+            SyntaxKind::EOF => TokenKind::EOF,
+            _ => TokenKind::UNKNOWN,
         }
     }
 }
 
 pub fn tokenize(source: &str) -> (TokenStream, Vec<SyntaxError>) {
-    let tokens = TokenStream::from(source);
+    // let files = SimpleFiles::new();
 
-    let mut errors = Vec::new();
+    // let stdin = dirs_next::cache_dir()
+    //     .expect("Could not find cache dir")
+    //     .join("<STDIN>");
 
-    for token in tokens.tokens.iter() {
-        if let TokenKind::UNKNOWN = token.kind {
-            errors.push(SyntaxError::new(
-                format!("Unknown token found here: {}", token.lexeme),
-                token.span.into(),
-            ));
-        }
+    // // create file if it doesn't already exist, otherwise truncate it
+    // let mut file = OpenOptions::new()
+    //     .read(true)
+    //     .write(true)
+    //     .create(true)
+    //     .truncate(true)
+    //     .open(&stdin)
+    //     .expect("Could not open <STDIN>. This is a bug and should be reported.");
+
+    // // write the source to the file
+    // file.write_all(source.as_bytes());
+
+    // let file_id = files.add(
+    //     stdin.to_str().expect("Could not convert path to str"),
+    //     source,
+    // );
+
+    let mut lexer = StarlarkLexer::new();
+    let TokenSink {
+        tokens,
+        lexical_errors,
+    } = lexer.tokenize(source);
+
+    if !lexical_errors.is_empty() {
+        lexer.emit_errors();
+
+        (
+            tokens,
+            lexical_errors
+                .into_iter()
+                .map(|e| {
+                    let span = &e.labels.first().expect("No labels found").range;
+                    let text_range = TextRange::new(
+                        TextSize::from(span.start as u32),
+                        TextSize::from(span.end as u32),
+                    );
+                    SyntaxError::new(e.message, text_range)
+                })
+                .collect(),
+        )
+    } else {
+        (tokens, Vec::new())
     }
 
-    (tokens, errors)
+    // let tokens = TokenStream::from(source);
+
+    // let mut errors = Vec::new();
+
+    // for token in tokens.tokens.iter() {
+    //     if let TokenKind::UNKNOWN = token.kind {
+    //         errors.push(SyntaxError::new(
+    //             format!("Unknown token found here: {}", token.lexeme),
+    //             token.span.into(),
+    //         ));
+    //     }
+    // }
+
+    // (tokens, errors)
 }

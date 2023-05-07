@@ -16,6 +16,16 @@ alias(
     actual = "//crates/bin/devtools/syntaxgen:syntaxgen",
 )
 
+alias(
+    name = "parallel-compiler",
+    actual = "//crates/bin/design/parallel-compiler:parallel-compiler",
+)
+
+alias(
+    name = "skylark",
+    actual = "//crates/bin/apps/skylark:skylark",
+)
+
 # alias(
 #     name = "mini-inkwell",
 #     actual = "//crates/bin/mini-inkwell:mini-inkwell",

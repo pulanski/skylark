@@ -2,7 +2,9 @@ use std::{marker::PhantomData, sync::Arc};
 
 use crate::{
     ast::{AstNode, Expression, File},
-    parsing, Parse, SyntaxKind, SyntaxNode,
+    parsing,
+    syntax_error::SyntaxError,
+    Parse, SyntaxKind, SyntaxNode,
 };
 
 impl Parse<SyntaxNode> {
@@ -19,32 +21,36 @@ impl Parse<SyntaxNode> {
     }
 }
 
-// impl Parse<File> {
-//     pub fn debug_dump(&self) -> String {
-//         let mut buf = format!("{:#?}", self.tree().syntax());
-//         for err in self.errors.iter() {
-//             writeln!(buf, "error {:?}: {}", err.location(), err.kind()).unwrap();
-//         }
-//         buf
-//     }
-//     /// Parses the `SourceFile` again but with the given modification applied.
-//     pub fn reparse(&self, indel: &Indel) -> Parse<SourceFile> {
-//         // TODO: Implement something smarter here.
-//         self.full_reparse(indel)
-//     }
-//     /// Performs a "reparse" of the `SourceFile` after applying the specified modification by
-//     /// simply parsing the entire thing again.
-//     fn full_reparse(&self, indel: &Indel) -> Parse<SourceFile> {
-//         let mut text = self.tree().syntax().text().to_string();
-//         indel.apply(&mut text);
-//         File::parse(&text)
-//     }
-// }
+impl Parse<File> {
+    pub fn debug_dump(&self) -> String {
+        // let mut buf = format!("{:#?}", self.tree().syntax());
+        // for err in self.errors.iter() {
+        //     writeln!(buf, "error {:?}: {}", err.location(), err.kind()).unwrap();
+        //     writeln!(buf, "error {:?}: {}", err.location(), err.kind()).unwrap();
+        // }
+        // buf
+        let mut s = String::new();
+        s.push_str(&format!("{:#?}", self.syntax_node()));
+        s.push_str(&format_errors(self.errors()));
+        s
+    }
+    // /// Parses the `SourceFile` again but with the given modification applied.
+    // pub fn reparse(&self, indel: &Indel) -> Parse<SourceFile> {
+    //     // TODO: Implement something smarter here.
+    //     self.full_reparse(indel)
+    // }
+    // /// Performs a "reparse" of the `SourceFile` after applying the specified modification by
+    // /// simply parsing the entire thing again.
+    // fn full_reparse(&self, indel: &Indel) -> Parse<SourceFile> {
+    //     let mut text = self.tree().syntax().text().to_string();
+    //     indel.apply(&mut text);
+    //     File::parse(&text)
+    // }
+}
 
 impl File {
     pub fn parse(text: &str) -> Parse<File> {
-        // todo:
-        let (green, mut errors) = parsing::parse_text(text);
+        let (green, errors) = parsing::parse_text(text);
         let root = SyntaxNode::new_root(green.clone());
 
         // // errors.extend(validation::validate(&root));
@@ -61,4 +67,17 @@ impl File {
             _ty: PhantomData,
         }
     }
+}
+
+fn format_errors(errors: &[SyntaxError]) -> String {
+    let mut s = String::new();
+    s.push_str(
+        "
+=============================
+Errors:
+=============================",
+    );
+    s.push('\n');
+    s.push_str(&format!("{:#?}", errors));
+    s
 }

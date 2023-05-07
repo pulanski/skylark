@@ -1,18 +1,19 @@
 use std::cell::Cell;
 
 use crate::ast::AstNode;
-use crate::event::Event;
+use crate::event::{self, Event};
 pub use crate::lang::{SyntaxElement, SyntaxNode, SyntaxToken};
 use crate::lexer::{FileId, Span, Token, TokenStream};
 use crate::parsing::{TokenSource, TreeSink};
 use crate::syntax_tree::SyntaxTreeBuilder;
 use crate::token_set::TokenSet;
-use crate::T;
-use crate::{ast::SyntaxKind, lexer::TokenKind};
+use crate::{ast::SyntaxKind::*, lexer::TokenKind};
+use crate::{grammar, SyntaxKind};
 use anyhow::Result;
 use codespan_reporting::files::SimpleFiles;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
 use codespan_reporting::term::{self, Config};
+use drop_bomb::DropBomb;
 use getset::{Getters, MutGetters, Setters};
 use owo_colors::OwoColorize;
 
@@ -139,12 +140,12 @@ impl StarlarkParser {
                     .unwrap_or(&Token::new(TokenKind::EOF, "".to_owned(), Span::new(0, 0)))
                     .clone();
                 Err(ParseError::UnexpectedToken {
-                    expected: vec![
+                    expected: TokenSet::from(vec![
                         TokenKind::DEF_KW,
                         TokenKind::IF_KW,
                         TokenKind::FOR_KW,
                         // ...
-                    ],
+                    ]),
                     found,
                 })
             }
@@ -231,10 +232,7 @@ use typed_builder::TypedBuilder;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ParseError {
-    UnexpectedToken {
-        expected: Vec<TokenKind>,
-        found: Token,
-    },
+    UnexpectedToken { expected: TokenSet, found: Token },
     UnexpectedEof,
 }
 
@@ -386,6 +384,18 @@ impl<'t> Parser<'t> {
         kinds.contains(self.current())
     }
 
+    fn push_event(&mut self, event: Event) {
+        self.events.push(event)
+    }
+
+    /// Starts a new node in the syntax tree. All nodes and tokens consumed between the `start` and
+    /// the corresponding `Marker::complete` belong to the same node.
+    pub(crate) fn start(&mut self) -> Marker {
+        let pos = self.events.len() as u32;
+        self.push_event(Event::tombstone());
+        Marker::new(pos)
+    }
+
     // We don't have to worry about the `at_*` methods being called since we aren't
     // gluing tokens together. The tokens are already glued together by the lexer.
     // fn at_composite2(&self, n: usize, k1: SyntaxKind, k2: SyntaxKind) -> bool {
@@ -406,8 +416,184 @@ impl<'t> Parser<'t> {
     pub(crate) fn at_contextual_kw(&self, kw: &str) -> bool {
         self.token_source.is_keyword(kw)
     }
+
+    pub(crate) fn bump(&mut self, kind: SyntaxKind) {
+        assert!(self.eat(kind), "kind != {kind:?}");
+    }
+
+    pub(crate) fn bump_any(&mut self) {
+        if self.current() == EOF {
+            return;
+        }
+        self.do_bump(self.current());
+    }
+
+    /// Consume the next token if `kind` matches.
+    pub(crate) fn eat(&mut self, kind: SyntaxKind) -> bool {
+        if !self.at(kind) {
+            return false;
+        }
+
+        self.do_bump(kind);
+        true
+    }
+
+    fn do_bump(&mut self, kind: SyntaxKind) {
+        self.token_source.bump();
+        self.push_event(Event::Token {
+            kind,
+            n_raw_tokens: 1,
+        });
+    }
+
+    /// Consume the next token if it is `kind` or emit an error
+    /// otherwise.
+    pub(crate) fn expect(&mut self, kind: SyntaxKind) -> bool {
+        let current = self.current();
+        // if current == kind {
+        //     self.bump(Any);
+        //     return true;
+        // }
+        if self.eat(kind) {
+            return true;
+        }
+
+        self.push_event(Event::Error(ParseError::UnexpectedToken {
+            expected: TokenSet::from(vec![kind.tk()]),
+            found: Token::new(
+                current.tk(),
+                String::from("TODO: Improve diagnostics"),
+                Span::new(0, 0),
+            ),
+        }));
+        false
+    }
+
+    pub(crate) fn error(&mut self, error: ParseError) {
+        self.push_event(Event::Error(error));
+    }
 }
 
-pub fn parse(token_source: &mut dyn TokenSource, tree_sink: &mut dyn TreeSink) {
-    todo!("Parse source code into AST")
+/// Parse given tokens into the given sink as a rust file.
+pub(crate) fn parse(token_source: &mut dyn TokenSource, tree_sink: &mut dyn TreeSink) {
+    parse_from_tokens(token_source, tree_sink, grammar::root);
+}
+
+fn parse_from_tokens<F>(token_source: &mut dyn TokenSource, tree_sink: &mut dyn TreeSink, f: F)
+where
+    F: FnOnce(&mut Parser),
+{
+    let mut p = Parser::new(token_source);
+    f(&mut p);
+    let events = p.finish();
+    event::process(tree_sink, events);
+}
+
+/// See `Parser::start`
+pub(crate) struct Marker {
+    pos: u32,
+    bomb: DropBomb,
+}
+
+impl Marker {
+    fn new(pos: u32) -> Marker {
+        Marker {
+            pos,
+            bomb: DropBomb::new("Marker must be either completed or abandoned"),
+        }
+    }
+
+    /// Finishes the syntax tree node and assigns `kind` to it, and create a `CompletedMarker` for
+    /// possible future operation like `.precede()` to deal with forward_parent.
+    pub(crate) fn complete(mut self, p: &mut Parser, kind: SyntaxKind) -> CompletedMarker {
+        self.bomb.defuse();
+        let idx = self.pos as usize;
+        match p.events[idx] {
+            Event::Start {
+                kind: ref mut slot, ..
+            } => {
+                *slot = kind;
+            }
+            _ => unreachable!(),
+        }
+        let finish_pos = p.events.len() as u32;
+        p.push_event(Event::Finish);
+        CompletedMarker::new(self.pos, finish_pos, kind)
+    }
+
+    /// Abandons the syntax tree node. All its children are attached to its parent instead.
+    pub(crate) fn abandon(mut self, p: &mut Parser) {
+        self.bomb.defuse();
+        let idx = self.pos as usize;
+        if idx == p.events.len() - 1 {
+            match p.events.pop() {
+                Some(Event::Start {
+                    kind: TOMBSTONE,
+                    forward_parent: None,
+                }) => (),
+                _ => unreachable!(),
+            }
+        }
+    }
+}
+
+pub(crate) struct CompletedMarker {
+    start_pos: u32,
+    finish_pos: u32,
+    kind: SyntaxKind,
+}
+
+impl CompletedMarker {
+    fn new(start_pos: u32, finish_pos: u32, kind: SyntaxKind) -> Self {
+        CompletedMarker {
+            start_pos,
+            finish_pos,
+            kind,
+        }
+    }
+
+    /// This method allows to create a new node which starts *before* the current one. That is,
+    /// the parser could start node `A`, then complete it, and then after parsing the whole `A`,
+    /// decide that it should have started some node `B` before starting `A`. `precede` allows to
+    /// do exactly that. See also docs about `forward_parent` in `Event::Start`.
+    ///
+    /// Given completed events `[START, FINISH]` and its corresponding `CompletedMarker(pos: 0, _)`,
+    /// append a new `START` event as `[START, FINISH, NEWSTART]`, then mark `NEWSTART` as `START`'s
+    /// parent with saving its relative distance to `NEWSTART` into forward_parent(=2 in this case).
+    pub(crate) fn precede(self, p: &mut Parser) -> Marker {
+        let new_pos = p.start();
+        let idx = self.start_pos as usize;
+        match p.events[idx] {
+            Event::Start {
+                ref mut forward_parent,
+                ..
+            } => {
+                *forward_parent = Some(new_pos.pos - self.start_pos);
+            }
+            _ => unreachable!(),
+        }
+        new_pos
+    }
+
+    /// Undo this completion and turns into a `Marker`
+    pub(crate) fn undo_completion(self, p: &mut Parser) -> Marker {
+        let start_idx = self.start_pos as usize;
+        let finish_idx = self.finish_pos as usize;
+        match p.events[start_idx] {
+            Event::Start {
+                ref mut kind,
+                forward_parent: None,
+            } => *kind = SyntaxKind::TOMBSTONE,
+            _ => unreachable!(),
+        }
+        match p.events[finish_idx] {
+            ref mut slot @ Event::Finish => *slot = Event::tombstone(),
+            _ => unreachable!(),
+        }
+        Marker::new(self.start_pos)
+    }
+
+    pub(crate) fn kind(&self) -> SyntaxKind {
+        self.kind
+    }
 }

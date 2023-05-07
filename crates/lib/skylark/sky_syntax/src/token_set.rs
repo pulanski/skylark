@@ -32,7 +32,7 @@ use crate::{lexer::TokenKind, SyntaxKind};
 /// The [`TokenSet`] struct is a **space-efficient** data structure for working with collections of
 /// [`SyntaxKind`]s. It is designed for performance and provides many utility APIs for _quickly
 /// checking_ **membership**, **union**, **intersection**, and **other set operations**.
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TokenSet(u128);
 
 impl From<Vec<TokenKind>> for TokenSet {
@@ -119,6 +119,10 @@ impl TokenSet {
     /// ```
     pub const fn contains(&self, kind: SyntaxKind) -> bool {
         self.0 & mask(kind) != 0
+    }
+
+    pub const fn len(&self) -> usize {
+        self.0.count_ones() as usize
     }
 
     /// # Example
@@ -493,4 +497,17 @@ const fn mask(kind: SyntaxKind) -> u128 {
         "Invalid SyntaxKind"
     );
     1u128 << (kind as usize)
+}
+
+#[macro_export]
+macro_rules! TS {
+    [] => {
+        TokenSet::EMPTY
+    };
+    [$token:tt] => {
+        TokenSet::new(&[T![$token]])
+    };
+    [$( $token:tt ),* $(,)?] => {
+        TokenSet::new(&[$( T![$token], )*])
+    };
 }

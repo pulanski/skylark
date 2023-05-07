@@ -2,7 +2,7 @@ use std::mem;
 
 use strum::EnumCount;
 
-use crate::SyntaxKind;
+use crate::{SyntaxKind, TokenKind};
 
 impl From<u16> for SyntaxKind {
     #[inline(always)]
@@ -17,5 +17,11 @@ impl From<SyntaxKind> for u16 {
     fn from(kind: SyntaxKind) -> u16 {
         debug_assert!(kind as u16 <= SyntaxKind::COUNT as u16);
         kind as u16
+    }
+}
+
+impl SyntaxKind {
+    pub fn tk(&self) -> TokenKind {
+        TokenKind::from(self)
     }
 }

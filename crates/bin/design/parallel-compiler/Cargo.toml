@@ -1,0 +1,34 @@
+[package]
+name = "parallel-compiler"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+codespan = { workspace = true }
+codespan-reporting = { workspace = true }
+dyn-clone = { workspace = true }
+crossbeam = { workspace = true }
+futures = { workspace = true }
+indicatif = { workspace = true }
+insta = { workspace = true }
+rayon = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+derive-new = { workspace = true }
+derive_more = { workspace = true }
+getset = { workspace = true }
+lazy_static = { workspace = true }
+miette = { workspace = true }
+once_cell = { workspace = true }
+owo-colors = { workspace = true }
+parking_lot = { workspace = true }
+rand = { workspace = true }
+shrinkwraprs = { workspace = true }
+smartstring = { workspace = true }
+tracing-indicatif = { workspace = true }
+typed-builder = { workspace = true }
+ulid = { workspace = true }
+walkdir = { workspace = true }

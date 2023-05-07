@@ -1,0 +1,19 @@
+[package]
+name = "skylark"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+salsa = { path = "../../../lib/third-party/salsa" }
+sky_parser = { path = "../../../lib/skylark/sky_parser" }
+sky_syntax = { path = "../../../lib/skylark/sky_syntax" }
+derive-new = { workspace = true }
+ordered-float = { workspace = true }
+# ordered-float = "3.0"
+
+# salsa = { path = "../../components/salsa-2022", package = "salsa-2022" }
+
+[dev-dependencies]
+expect-test = "1.4.0"

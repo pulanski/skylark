@@ -6055,6 +6055,52 @@ third_party_rust_library(
     ],
 )
 
+alias(
+    name = "insta",
+    actual = ":insta-1.29.0",
+    visibility = ["PUBLIC"],
+)
+
+third_party_rust_library(
+    name = "insta-1.29.0",
+    srcs = [
+        "vendor/insta-1.29.0/src/content/json.rs",
+        "vendor/insta-1.29.0/src/content/mod.rs",
+        "vendor/insta-1.29.0/src/content/serialization.rs",
+        "vendor/insta-1.29.0/src/content/yaml.rs",
+        "vendor/insta-1.29.0/src/env.rs",
+        "vendor/insta-1.29.0/src/filters.rs",
+        "vendor/insta-1.29.0/src/glob.rs",
+        "vendor/insta-1.29.0/src/lib.rs",
+        "vendor/insta-1.29.0/src/macros.rs",
+        "vendor/insta-1.29.0/src/output.rs",
+        "vendor/insta-1.29.0/src/redaction.rs",
+        "vendor/insta-1.29.0/src/runtime.rs",
+        "vendor/insta-1.29.0/src/serialization.rs",
+        "vendor/insta-1.29.0/src/settings.rs",
+        "vendor/insta-1.29.0/src/snapshot.rs",
+        "vendor/insta-1.29.0/src/test.rs",
+        "vendor/insta-1.29.0/src/utils.rs",
+    ],
+    crate = "insta",
+    crate_root = "vendor/insta-1.29.0/src/lib.rs",
+    edition = "2018",
+    features = [
+        "colors",
+        "console",
+        "default",
+    ],
+    rustc_flags = ["--cap-lints=allow"],
+    visibility = [],
+    deps = [
+        ":console-0.15.5",
+        ":lazy_static-1.4.0",
+        ":linked-hash-map-0.5.6",
+        ":similar-2.2.1",
+        ":yaml-rust-0.4.5",
+    ],
+)
+
 third_party_rust_library(
     name = "instant-0.1.12",
     srcs = [
@@ -10659,6 +10705,12 @@ third_party_rust_library(
     deps = [":rand_core-0.6.4"],
 )
 
+alias(
+    name = "rayon",
+    actual = ":rayon-1.7.0",
+    visibility = ["PUBLIC"],
+)
+
 third_party_rust_library(
     name = "rayon-1.7.0",
     srcs = [
@@ -12088,6 +12140,41 @@ third_party_rust_library(
     rustc_flags = ["--cap-lints=allow"],
     visibility = [],
     deps = [":libc-0.2.142"],
+)
+
+third_party_rust_library(
+    name = "similar-2.2.1",
+    srcs = [
+        "vendor/similar-2.2.1/src/algorithms/capture.rs",
+        "vendor/similar-2.2.1/src/algorithms/compact.rs",
+        "vendor/similar-2.2.1/src/algorithms/hook.rs",
+        "vendor/similar-2.2.1/src/algorithms/lcs.rs",
+        "vendor/similar-2.2.1/src/algorithms/mod.rs",
+        "vendor/similar-2.2.1/src/algorithms/myers.rs",
+        "vendor/similar-2.2.1/src/algorithms/patience.rs",
+        "vendor/similar-2.2.1/src/algorithms/replace.rs",
+        "vendor/similar-2.2.1/src/algorithms/utils.rs",
+        "vendor/similar-2.2.1/src/common.rs",
+        "vendor/similar-2.2.1/src/iter.rs",
+        "vendor/similar-2.2.1/src/lib.rs",
+        "vendor/similar-2.2.1/src/text/abstraction.rs",
+        "vendor/similar-2.2.1/src/text/inline.rs",
+        "vendor/similar-2.2.1/src/text/mod.rs",
+        "vendor/similar-2.2.1/src/text/utils.rs",
+        "vendor/similar-2.2.1/src/types.rs",
+        "vendor/similar-2.2.1/src/udiff.rs",
+        "vendor/similar-2.2.1/src/utils.rs",
+    ],
+    crate = "similar",
+    crate_root = "vendor/similar-2.2.1/src/lib.rs",
+    edition = "2018",
+    features = [
+        "default",
+        "inline",
+        "text",
+    ],
+    rustc_flags = ["--cap-lints=allow"],
+    visibility = [],
 )
 
 alias(
@@ -16920,6 +17007,23 @@ third_party_rust_library(
     proc_macro = True,
     rustc_flags = ["--cap-lints=allow"],
     visibility = [],
+)
+
+third_party_rust_library(
+    name = "yaml-rust-0.4.5",
+    srcs = [
+        "vendor/yaml-rust-0.4.5/src/emitter.rs",
+        "vendor/yaml-rust-0.4.5/src/lib.rs",
+        "vendor/yaml-rust-0.4.5/src/parser.rs",
+        "vendor/yaml-rust-0.4.5/src/scanner.rs",
+        "vendor/yaml-rust-0.4.5/src/yaml.rs",
+    ],
+    crate = "yaml_rust",
+    crate_root = "vendor/yaml-rust-0.4.5/src/lib.rs",
+    edition = "2018",
+    rustc_flags = ["--cap-lints=allow"],
+    visibility = [],
+    deps = [":linked-hash-map-0.5.6"],
 )
 
 third_party_rust_library(

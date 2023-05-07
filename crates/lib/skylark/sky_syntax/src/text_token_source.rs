@@ -6,9 +6,15 @@ use crate::{
     parsing::TokenSource,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, new, Shrinkwrap)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Shrinkwrap)]
 pub struct TextTokenSource {
     tokens: TokenStream,
+}
+
+impl TextTokenSource {
+    pub fn new(tokens: TokenStream) -> Self {
+        Self { tokens }
+    }
 }
 
 impl TokenSource for TextTokenSource {
