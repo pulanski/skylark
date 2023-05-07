@@ -46,7 +46,7 @@ impl Debug for STDIN_PATH {
 
 pub type FileId = usize;
 
-#[derive(Debug, Display, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Display, Default, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
 #[display(fmt = "{start}..{end}")]
 pub struct Span {
     start: usize,

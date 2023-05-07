@@ -8,7 +8,7 @@ use crate::parsing::{TokenSource, TreeSink};
 use crate::syntax_tree::SyntaxTreeBuilder;
 use crate::token_set::TokenSet;
 use crate::{ast::SyntaxKind::*, lexer::TokenKind};
-use crate::{grammar, SyntaxKind};
+use crate::{grammar, SyntaxKind, T};
 use anyhow::Result;
 use codespan_reporting::files::SimpleFiles;
 use codespan_reporting::term::termcolor::{ColorChoice, StandardStream};
@@ -472,6 +472,25 @@ impl<'t> Parser<'t> {
     pub(crate) fn error(&mut self, error: ParseError) {
         self.push_event(Event::Error(error));
     }
+
+    // TODO:
+    // Create an error node and consume the next token.
+    // pub(crate) fn error_recover(&mut self, message: &str, recovery: TokenSet) {
+    //     if self.at(T!['{']) || self.at(T!['}']) || self.at_ts(recovery) {
+    //         self.error(message);
+    //     } else {
+    //         let m = self.start();
+    //         self.error(message);
+    //         self.bump_any();
+    //         m.complete(self, ERROR);
+    //     }
+    // }
+
+    // /// Emit error with the `message`
+    // pub(crate) fn error<T: Into<String>>(&mut self, message: T) {
+    //     let msg = ParseError(message.into());
+    //     self.push_event(Event::Error { msg });
+    // }
 }
 
 /// Parse given tokens into the given sink as a rust file.
