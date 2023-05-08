@@ -1574,6 +1574,7 @@ dependencies = [
  "miette",
  "num-derive",
  "num-traits",
+ "once_cell",
  "owo-colors",
  "pretty_assertions_sorted",
  "proc-macro2",

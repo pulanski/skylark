@@ -21,6 +21,7 @@ rust_library(
         "//third-party/rust:num-traits",
         "//third-party/rust:strum_macros",
         "//third-party/rust:strum",
+        "//third-party/rust:once_cell",
         "//third-party/rust:owo-colors",
         "//third-party/rust:rowan",
         "//third-party/rust:shrinkwraprs",

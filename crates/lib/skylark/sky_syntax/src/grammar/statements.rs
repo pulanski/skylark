@@ -26,6 +26,8 @@ pub(super) const ASSIGNMENT_OPERATOR: TokenSet = TokenSet::new(&[
     T![>>=],
 ]);
 
+pub(super) const PARAM_START: TokenSet = TokenSet::new(&[T![identifier], T![*], T![**]]);
+
 /// A **statement** in a **Starlark file**. Statements are **syntax
 /// nodes** that represent the **basis** of **Starlark files**. They
 /// can **declare functions**, **define variables**, and more (_see below_).
@@ -113,7 +115,7 @@ pub(super) fn def_stmt(p: &mut Parser) {
 /// def sum(x, y, z):
 ///    return x + y + z
 /// ```
-fn parameters(p: &mut Parser) {
+pub(super) fn parameters(p: &mut Parser) {
     let m = p.start();
 
     parameter(p);
@@ -418,7 +420,7 @@ pub(super) fn return_stmt(p: &mut Parser) {
 ///      break
 ///   print(x)
 /// ```
-fn break_stmt(p: &mut Parser) {
+pub(super) fn break_stmt(p: &mut Parser) {
     assert!(p.at(T![break])); // precondition (enforced by caller)
     let m = p.start();
 
@@ -444,7 +446,7 @@ fn break_stmt(p: &mut Parser) {
 ///   continue
 /// print(x)
 /// ```
-fn continue_stmt(p: &mut Parser) -> CompletedMarker {
+pub(super) fn continue_stmt(p: &mut Parser) -> CompletedMarker {
     assert!(p.at(T![continue])); // precondition (enforced by caller)
     let m = p.start();
 
@@ -472,7 +474,7 @@ fn continue_stmt(p: &mut Parser) -> CompletedMarker {
 /// else:
 ///     print(x)
 /// ```
-fn pass_stmt(p: &mut Parser) {
+pub(super) fn pass_stmt(p: &mut Parser) {
     assert!(p.at(T![pass])); // precondition (enforced by caller)
     let m = p.start();
 
@@ -490,7 +492,7 @@ fn pass_stmt(p: &mut Parser) {
 /// ```
 /// AssignStmt = Expression ('=' | '+=' | '-=' | '*=' | '/=' | '//=' | '%=' | '&=' | '|=' | '^=' | '<<=' | '>>=') Expression
 /// ```
-fn assign_stmt(p: &mut Parser) -> CompletedMarker {
+pub(super) fn assign_stmt(p: &mut Parser) {
     let m = p.start();
 
     expr::expression(p);
@@ -511,7 +513,7 @@ fn assign_stmt(p: &mut Parser) -> CompletedMarker {
     }
     expr::expression(p);
 
-    m.complete(p, ASSIGN_STMT)
+    m.complete(p, ASSIGN_STMT);
 }
 
 /// An **expression statement**. An expression statement is a statement
@@ -530,12 +532,12 @@ fn assign_stmt(p: &mut Parser) -> CompletedMarker {
 /// x = 1 # an expression statement
 /// foo() # another expression statement
 /// ```
-fn expr_stmt(p: &mut Parser) -> CompletedMarker {
+pub(super) fn expr_stmt(p: &mut Parser) {
     let m = p.start();
 
     expr::expression(p);
 
-    m.complete(p, EXPR_STMT)
+    m.complete(p, EXPR_STMT);
 }
 
 /// A **load statement**. Load statements are used to **import** other
@@ -555,7 +557,7 @@ fn expr_stmt(p: &mut Parser) -> CompletedMarker {
 /// _git_repository = "git_repository") # usage with alias
 /// load("@stdlib//strings.bzl", "strncpy") # regular usage
 /// ```
-fn load_stmt(p: &mut Parser) {
+pub(super) fn load_stmt(p: &mut Parser) {
     let m = p.start();
 
     p.bump(T![load]);

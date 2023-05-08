@@ -1,5 +1,3 @@
-use std::cell::Cell;
-
 use crate::ast::AstNode;
 use crate::event::{self, Event};
 pub use crate::lang::{SyntaxElement, SyntaxNode, SyntaxToken};
@@ -16,6 +14,7 @@ use codespan_reporting::term::{self, Config};
 use drop_bomb::DropBomb;
 use getset::{Getters, MutGetters, Setters};
 use owo_colors::OwoColorize;
+use std::cell::Cell;
 
 #[derive(Debug, Getters, MutGetters, Setters, TypedBuilder)]
 #[getset(get = "pub", get_mut = "pub", set = "pub")]
@@ -50,120 +49,6 @@ impl StarlarkParser {
         }
     }
 
-    // OLD API
-    /// Parses the token stream and returns the root SyntaxNode.
-    // pub fn parse(&mut self) -> Result<SyntaxNode> {
-    //     self.advance()?;
-    //     let builder = self
-    //         .syntax_builder
-    //         .as_mut()
-    //         .expect("Syntax builder should be present before parsing");
-    //     builder.start_node(SyntaxKind::FILE);
-
-    //     while let Some(token) = &self.current {
-    //         self.syntax_builder.as_mut().unwrap().add_token(token);
-    //         self.advance()?;
-    //     }
-    //     self.syntax_builder.as_mut().unwrap().finish_node();
-
-    //     let syntax = self.syntax_builder.take().unwrap().finish();
-    //     Ok(syntax)
-    // }
-
-    /// Advances the token stream to the next token.
-    fn advance(&mut self) -> Result<()> {
-        self.current = self.tokens.next();
-        Ok(())
-    }
-
-    // TODO: move api to this
-    // /// Advances the token stream to the next token.
-    // fn advance(&mut self) -> Option<Token> {
-    //     self.current = self.tokens.next();
-
-    //     &self.current
-    // }
-
-    fn parse_file(&mut self) -> Result<()> {
-        let builder = self
-            .syntax_builder
-            .as_mut()
-            .expect("Syntax builder should be present before parsing");
-        builder.start_node(SyntaxKind::FILE);
-
-        while let Some(token) = &self.current {
-            self.try_parse(|parser| parser.parse_statement());
-        }
-
-        self.syntax_builder.as_mut().expect("Syntax builder should be present after parsing. If this error occurs, please file a bug report. This is a fatal error.").finish_node();
-
-        // get the File AST
-        let syntax = self.syntax_builder.take().expect("Syntax builder should be present after parsing. If this error occurs, please file a bug report. This is a fatal error.").finish();
-
-        // get the file AST Node
-        let file_node = syntax.first_child().expect("File should have a first child. If this error occurs, please file a bug report. This is a fatal error.");
-        Ok(())
-    }
-
-    fn try_parse<F: FnOnce(&mut StarlarkParser) -> Result<(), ParseError>>(
-        &mut self,
-        parse_func: F,
-    ) {
-        let result = parse_func(self);
-        let Err(error) = result else { return };
-        self.emit_error(error);
-        self.recover();
-    }
-
-    fn recover(&mut self) {
-        while let Some(token) = &self.current {
-            match token.kind() {
-                // You can add other token kinds that you think should be recovery points
-                TokenKind::DEF_KW | TokenKind::IF_KW | TokenKind::FOR_KW | TokenKind::EOF => {
-                    return;
-                }
-                _ => self.advance().expect("Unreachable: current token should be present. If this error occurs, please file a bug report. This means we've jumped off the edge without reaching an EOF."),
-            }
-        }
-    }
-
-    fn parse_statement(&mut self) -> Result<(), ParseError> {
-        match self.current.as_ref().map(|token| token.kind()) {
-            Some(TokenKind::DEF_KW) => self.parse_def_stmt(),
-            Some(TokenKind::IF_KW) => self.parse_if_stmt(),
-            Some(TokenKind::FOR_KW) => self.parse_for_stmt(),
-            // ...
-            _ => {
-                let found = self
-                    .current
-                    .as_ref()
-                    .unwrap_or(&Token::new(TokenKind::EOF, "".to_owned(), Span::new(0, 0)))
-                    .clone();
-                Err(ParseError::UnexpectedToken {
-                    expected: TokenSet::from(vec![
-                        TokenKind::DEF_KW,
-                        TokenKind::IF_KW,
-                        TokenKind::FOR_KW,
-                        // ...
-                    ]),
-                    found,
-                })
-            }
-        }
-    }
-
-    fn parse_def_stmt(&self) -> Result<(), ParseError> {
-        todo!("Parse def() statements")
-    }
-
-    fn parse_if_stmt(&self) -> Result<(), ParseError> {
-        todo!("Parse if statements")
-    }
-
-    fn parse_for_stmt(&self) -> Result<(), ParseError> {
-        todo!("Parse for loops")
-    }
-
     fn emit_error(&mut self, error: ParseError) {
         let diagnostic = error.to_diagnostic(self.file_ids[0]);
 
@@ -191,24 +76,6 @@ impl StarlarkParser {
         );
 
         Ok(())
-    }
-
-    fn build_syntax_tree(&mut self) -> Result<SyntaxNode> {
-        self.advance()?;
-        let builder = self
-            .syntax_builder
-            .as_mut()
-            .expect("Syntax builder should be present before parsing");
-        builder.start_node(SyntaxKind::FILE);
-
-        while let Some(token) = &self.current {
-            self.syntax_builder.as_mut().unwrap().add_token(token);
-            self.advance()?;
-        }
-        self.syntax_builder.as_mut().unwrap().finish_node();
-
-        let syntax = self.syntax_builder.take().unwrap().finish();
-        Ok(syntax)
     }
 
     pub(crate) fn parse(&self) -> Result<TextTreeSink> {
