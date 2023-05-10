@@ -1,6 +1,8 @@
 use std::io::{self, Write};
 
 use ir::{Diagnostics, SourceProgram};
+use sky_syntax::init_logging;
+use tracing::Level;
 
 // ANCHOR: jar_struct
 #[salsa::jar(db = Db)]
@@ -71,13 +73,16 @@ mod type_check;
 //     eprintln!("{diagnostics:?}");
 // }
 fn main() {
-    let source = r"def foo():
-        pass $$
-    ";
+    let source = "asdf = 1";
+
+    let log_level = Level::DEBUG;
+    init_logging(log_level).expect("Failed to initialize logging");
+
+    tracing::debug!("Parsing source: {}", source);
 
     let ast = sky_syntax::File::parse(source);
 
-    println!("ast: {:#?}", ast.debug_dump());
+    println!("{}", ast.debug_dump());
 
     //     let mut lexer = sky_syntax::StarlarkLexer::new();
 

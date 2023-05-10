@@ -334,7 +334,16 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::FLOAT => FLOAT,
             TokenKind::STRING => STRING,
             TokenKind::BYTES => BYTES,
-            _ => unreachable!(),
+            TokenKind::NEWLINE => NEWLINE,
+            TokenKind::INDENT => INDENT,
+            TokenKind::OUTDENT => OUTDENT,
+            TokenKind::NumericLiteral => INT,
+            TokenKind::COMMENT => COMMENT,
+            TokenKind::WHITESPACE => WHITESPACE,
+            TokenKind::UNKNOWN => UNKNOWN,
+            TokenKind::EOF => EOF,
+            TokenKind::DSLASHEQ => todo!(),
+            // TokenKind::DSLASHEQ => DSLASHEQ,
         }
     }
 }

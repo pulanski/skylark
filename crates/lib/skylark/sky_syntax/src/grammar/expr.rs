@@ -1,8 +1,13 @@
-use once_cell::sync::Lazy;
-
-use crate::{parser::Parser, SyntaxKind::*, TokenSet, T};
-
-use super::statements::{self, PARAM_START};
+use super::{
+    comprehension::{dict_comp, dict_expr, list_comp},
+    statements::{self, PARAM_START},
+};
+use crate::{
+    lexer::{Span, Token},
+    parser::{ParseError, Parser},
+    SyntaxKind::*,
+    TokenSet, T,
+};
 
 pub static UNARY_OP: TokenSet = TokenSet::new(&[T![not], T![-], T![+], T![~]]);
 
@@ -48,7 +53,9 @@ pub const BIN_OP: TokenSet = TokenSet::new(&[
 /// x, y, z
 /// x + y, y + z, z + x
 /// ```
+#[tracing::instrument(level = "trace", skip(p))]
 pub(super) fn expression(p: &mut Parser) {
+    tracing::trace!("Parsing expression");
     let m = p.start();
 
     test(p);
@@ -56,6 +63,7 @@ pub(super) fn expression(p: &mut Parser) {
         test(p);
     }
 
+    tracing::trace!("Completed expression");
     m.complete(p, EXPRESSION);
 }
 
@@ -83,16 +91,24 @@ pub(super) fn expression(p: &mut Parser) {
 /// x > 3
 /// x if x > 3 else y
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn test(p: &mut Parser) {
-    // TODO: Add `UnaryExpr`, `BinaryExpr`, and `LambdaExpr`.
     let m = p.start();
+    tracing::debug!("Parsing test. Current token: {:?}", p.current());
 
     if p.at(T![if]) {
         if_expr(p);
+    } else if p.at(T![lambda]) {
+        lambda_expr(p);
+    } else if p.at_ts(UNARY_OP) {
+        unary_expr(p);
     } else {
         primary_expr(p);
     }
 
+    // TODO: Add support for binary expressions
+
+    tracing::debug!("Completed test");
     m.complete(p, TEST);
 }
 
@@ -142,7 +158,8 @@ pub(super) fn primary_expr(p: &mut Parser) {
 /// An **operand** in an **expression**. In Starlark, **operands** are
 /// **syntax nodes** which represent the components of **expressions** (e.g. `x` in `x + y`).
 ///
-/// See [`expression`], [`list_expr`], [`list_comp`], [`dict_expr`], and [`dict_comp`] for more information.
+/// See [`expression`], [`list_expr`], [`comprehension::list_comp`], [`comprehension::dict_expr`],
+/// and [`comprehension::dict_comp`] for more information.
 ///
 /// ## Ungrammar
 ///
@@ -162,27 +179,84 @@ pub(super) fn primary_expr(p: &mut Parser) {
 /// 1
 /// [1, 2, 3]
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn operand(p: &mut Parser) {
     let m = p.start();
+    tracing::debug!("Parsing operand. Current token: {:?}", p.current());
 
     match p.current() {
-        T![identifier] | T![int] | T![float] | T![string] | T![bytes] => p.bump_any(),
+        T![identifier] | T![int] | T![float] | T![string] | T![bytes] => {
+            tracing::debug!("Parsing literal. Literal token: {:?}", p.current());
+            p.bump_any()
+        }
         T!['('] => {
             p.bump(T!['(']);
+            tracing::debug!(
+                "Parsing parenthesized expression. Current token: {:?}",
+                p.current()
+            );
             if !p.at(T![')']) {
                 expression(p);
                 p.eat(T![,]);
             }
             p.expect(T![')']);
         }
-
-        // Add cases for ListExpr, ListComp, DictExpr, and DictComp when implemented
-        // _ => p.err_and_bump("expected an operand"),
+        T!['['] => {
+            tracing::debug!(
+                "Parsing list expression or comprehension. Current token: {:?}",
+                p.current()
+            );
+            if p.nth_at(1, T![for]) {
+                tracing::debug!("Parsing list comprehension");
+                list_comp(p);
+            } else {
+                tracing::debug!("Parsing list expression");
+                list_expr(p);
+            }
+        }
+        T!['{'] => {
+            if p.nth_at(1, T![for]) {
+                tracing::debug!("Parsing dict comprehension");
+                dict_comp(p);
+            } else {
+                tracing::debug!("Parsing dict expression");
+                dict_expr(p);
+            }
+        }
         _ => {
-            todo!("Add cases for ListExpr, ListComp, DictExpr, and DictComp when implemented")
+            p.error(ParseError::UnexpectedToken {
+                expected: TokenSet::new(&[
+                    T![identifier],
+                    T![int],
+                    T![float],
+                    T![string],
+                    T![bytes],
+                    T!['('],
+                    T!['['],
+                    T!['{'],
+                ]),
+                found: Token::new(
+                    p.current().tk(),
+                    String::from("expected an operand"),
+                    Span::new(0, 0),
+                    // p.current().text.clone(),
+                    // p.current().span
+                ),
+            });
+            // p.err_recover("operand error", |p| {
+            //     p.at(T![identifier])
+            //         || p.at(T![int])
+            //         || p.at(T![float])
+            //         || p.at(T![string])
+            //         || p.at(T![bytes])
+            //         || p.at(T!['('])
+            //         || p.at(T!['['])
+            //         || p.at(T!['{'])
+            // });
         }
     }
 
+    tracing::debug!("Finished parsing operand");
     m.complete(p, OPERAND);
 }
 
@@ -200,12 +274,15 @@ pub(super) fn operand(p: &mut Parser) {
 /// ```starlark
 /// x.foo
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn dot_suffix(p: &mut Parser) {
     let m = p.start();
+    tracing::debug!("Parsing dot suffix");
 
     p.expect(T![.]);
     p.expect(T![identifier]);
 
+    tracing::debug!("Finished parsing dot suffix");
     m.complete(p, DOT_SUFFIX);
 }
 
@@ -229,8 +306,10 @@ pub(super) fn dot_suffix(p: &mut Parser) {
 /// x[1:3]
 /// x[1:]
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn slice_suffix(p: &mut Parser) {
     let m = p.start();
+    tracing::debug!("Parsing slice suffix");
 
     p.expect(T!['[']);
     if p.eat(T![:]) {
@@ -249,6 +328,7 @@ pub(super) fn slice_suffix(p: &mut Parser) {
     }
     p.expect(T![']']);
 
+    tracing::debug!("Finished parsing slice suffix");
     m.complete(p, SLICE_SUFFIX);
 }
 
@@ -267,8 +347,10 @@ pub(super) fn slice_suffix(p: &mut Parser) {
 /// ```starlark
 /// x.foo(1, 2, 3)
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn call_suffix(p: &mut Parser) {
     let m = p.start();
+    tracing::debug!("Parsing call suffix");
 
     p.expect(T!['(']);
     if !p.at(T![')']) {
@@ -277,6 +359,7 @@ pub(super) fn call_suffix(p: &mut Parser) {
     }
     p.expect(T![')']);
 
+    tracing::debug!("Finished parsing call suffix");
     m.complete(p, CALL_SUFFIX);
 }
 
@@ -297,14 +380,17 @@ pub(super) fn call_suffix(p: &mut Parser) {
 /// ```starlark
 /// 1, 2, 3
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn arguments(p: &mut Parser) {
     let m = p.start();
+    tracing::debug!("Parsing arguments");
 
     argument(p);
     while p.eat(T![,]) {
         argument(p);
     }
 
+    tracing::debug!("Finished parsing arguments");
     m.complete(p, ARGUMENTS);
 }
 
@@ -328,8 +414,10 @@ pub(super) fn arguments(p: &mut Parser) {
 /// args
 /// **kwargs
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn argument(p: &mut Parser) {
     let m = p.start();
+    tracing::debug!("Parsing argument");
 
     if p.at(T![identifier]) && p.nth_at(1, T![=]) {
         p.bump(T![identifier]);
@@ -345,6 +433,7 @@ pub(super) fn argument(p: &mut Parser) {
         test(p);
     }
 
+    tracing::debug!("Finished parsing argument");
     m.complete(p, ARGUMENT);
 }
 
@@ -364,10 +453,12 @@ pub(super) fn argument(p: &mut Parser) {
 /// ```starlark
 /// [1, 2, 3]
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn list_expr(p: &mut Parser) {
     let m = p.start();
-    p.expect(T!['[']);
+    tracing::debug!("Parsing list expression");
 
+    p.expect(T!['[']);
     if !p.at(T![']']) {
         expression(p);
         while p.eat(T![,]) {
@@ -377,8 +468,9 @@ pub(super) fn list_expr(p: &mut Parser) {
             expression(p);
         }
     }
-
     p.expect(T![']']);
+
+    tracing::debug!("Finished parsing list expression");
     m.complete(p, LIST_EXPR);
 }
 
@@ -402,37 +494,25 @@ pub(super) fn list_expr(p: &mut Parser) {
 ///
 /// not x
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn unary_expr(p: &mut Parser) {
     let m = p.start();
+    tracing::debug!("Parsing unary_expr");
 
     if p.at_ts(UNARY_OP) {
         p.bump_any();
         test(p);
     } else {
         // TODO: add diganostic and error recovery
-        // p.error_recover("expected a unary operator", &[T![+], T![-], T![not], T![~]]);
+        // p.error("expected a unary operator");
+        // p.err_recover("unary operator error", |p| {
+        //     p.at(T![+]) || p.at(T![-]) || p.at(T![not]) || p.at(T![~])
+        // });
     }
 
+    tracing::debug!("Finished parsing unary_expr");
     m.complete(p, UNARY_EXPR);
 }
-
-// FIXME tmp
-// let m = p.start();
-
-//     test(p);
-//     while p.at_ts(*BIN_OP) {
-//         if p.at(T![in]) && !p.nth_at(1, T![not]) {
-//             p.bump(T![in]);
-//             // TODO: need to figure out how to deal with error handling and recovery here
-//             // p.expect(T![not]);
-//         } else {
-//             p.bump_any();
-//         }
-//         p.bump_any();
-//         test(p);
-//     }
-
-//     m.complete(p, BINARY_EXPR);
 
 /// A **binary expression**. In Starlark, **binary expressions** are
 /// **two expressions** separated by a **binary operator**.
@@ -464,8 +544,20 @@ pub(super) fn unary_expr(p: &mut Parser) {
 /// x * y
 /// a and b
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn binary_expr(p: &mut Parser) {
-    todo!("binary_expr")
+    let m = p.start();
+    tracing::debug!("Parsing binary_expr");
+
+    test(p);
+
+    while p.at_ts(BIN_OP) || (p.at(T![not]) && p.nth_at(1, T![in])) {
+        bin_op(p);
+        test(p);
+    }
+
+    tracing::debug!("Finished parsing binary_expr");
+    m.complete(p, BINARY_EXPR);
 }
 
 /// A **binary operator**. In Starlark, **binary operators** are
@@ -494,8 +586,24 @@ pub(super) fn binary_expr(p: &mut Parser) {
 /// x + y
 /// a * b
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn bin_op(p: &mut Parser) {
-    todo!("bin_op")
+    tracing::debug!("Parsing bin_op");
+
+    if p.at_ts(BIN_OP) {
+        p.bump_any();
+    } else if p.at(T![not]) && p.nth_at(1, T![in]) {
+        p.bump(T![not]);
+        p.bump(T![in]);
+    } else {
+        // TODO: add diganostic and error recovery
+        // p.error("expected a binary operator");
+        // p.err_recover("binary operator error", |p| {
+        //     p.at_ts(&BINARY_OPERATORS) || (p.at(T![not]) && p.nth_at(1, T![in]))
+        // });
+    }
+
+    tracing::debug!("Finished parsing bin_op");
 }
 
 /// A **lambda expression**. In Starlark, **lambda expressions** are
@@ -515,8 +623,10 @@ pub(super) fn bin_op(p: &mut Parser) {
 /// ```starlark
 /// lambda x: x + 1
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn lambda_expr(p: &mut Parser) {
     let m = p.start();
+    tracing::debug!("Parsing lambda_expr");
 
     p.expect(T![lambda]);
     if p.at_ts(PARAM_START) {
@@ -525,6 +635,7 @@ pub(super) fn lambda_expr(p: &mut Parser) {
     p.expect(T![:]);
     test(p);
 
+    tracing::debug!("Finished parsing lambda_expr");
     m.complete(p, LAMBDA_EXPR);
 }
 
@@ -544,8 +655,10 @@ pub(super) fn lambda_expr(p: &mut Parser) {
 /// ```starlark
 /// x if x > 0 else -x
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn if_expr(p: &mut Parser) {
     let m = p.start();
+    tracing::debug!("Parsing if_expr");
 
     test(p);
     p.expect(T![if]);
@@ -553,5 +666,6 @@ pub(super) fn if_expr(p: &mut Parser) {
     p.expect(T![else]);
     test(p);
 
+    tracing::debug!("Finished parsing if_expr");
     m.complete(p, IF_EXPR);
 }

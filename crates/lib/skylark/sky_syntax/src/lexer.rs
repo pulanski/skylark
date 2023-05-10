@@ -104,6 +104,10 @@ impl Span {
             end: self.end.max(range.end),
         }
     }
+
+    pub fn len(&self) -> usize {
+        self.end - self.start
+    }
 }
 
 #[derive(
@@ -144,6 +148,15 @@ impl Token {
     pub fn is_keyword(&self, kw: &str) -> bool {
         self.lexeme().eq(kw)
     }
+
+    pub fn is_trivia(&self) -> bool {
+        matches!(
+            self.kind(),
+            TokenKind::WHITESPACE | TokenKind::COMMENT // | TokenKind::NEWLINE
+                                                       // | TokenKind::INDENT
+                                                       // | TokenKind::OUTDENT
+        )
+    }
 }
 
 impl Display for Token {
@@ -156,15 +169,16 @@ impl Display for Token {
     Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Getters, MutGetters, Setters, TypedBuilder,
 )]
 pub struct TokenStream {
+    #[getset(get = "pub", get_mut = "pub", set = "pub")]
     text: String,
     #[getset(get = "pub", get_mut = "pub", set = "pub")]
     tokens: Vec<Token>,
     #[builder(default = 0)]
     #[getset(get = "pub", get_mut = "pub", set = "pub")]
     cursor: usize,
-    file_id: FileId,
     #[getset(get = "pub", get_mut = "pub", set = "pub")]
     file_name: PathBuf,
+    file_id: FileId,
 }
 
 impl TokenStream {
@@ -199,7 +213,7 @@ impl TokenStream {
         self.tokens.push(token);
     }
 
-    fn peek(&self) -> Option<&Token> {
+    pub fn peek(&self) -> Option<&Token> {
         self.tokens.get(self.cursor)
     }
 
@@ -221,6 +235,11 @@ impl TokenStream {
 
     fn advance(&mut self) -> Option<&Token> {
         self.cursor += 1;
+        self.tokens.get(self.cursor)
+    }
+
+    pub fn advance_n(&mut self, n: usize) -> Option<&Token> {
+        self.cursor += n;
         self.tokens.get(self.cursor)
     }
 
@@ -272,6 +291,10 @@ impl TokenStream {
             file_id: 0,
             file_name: "empty_stream".into(),
         }
+    }
+
+    pub(crate) fn remove_trivia(&mut self) {
+        self.tokens.retain(|token| !token.is_trivia());
     }
 }
 
@@ -351,24 +374,6 @@ impl StarlarkLexer {
         self.token_sink.lexical_errors().len()
     }
 
-    // FIXME: This should be refactored or removed
-    // #[allow(clippy::should_implement_trait)]
-    // pub fn from_str(input: &str) -> (Self, FileId) {
-    //     let mut files = SimpleFiles::new();
-    //     let file = PathBuf::from(STDIN_PATH);
-
-    //     let file_id = files.add(file.to_string_lossy().to_string(), input.to_string());
-
-    //     (
-    //         Self {
-    //             files,
-    //             file_ids: vec![file_id],
-    //             token_sink: TokenSink::new(file_id, file),
-    //         },
-    //         file_id,
-    //     )
-    // }
-
     pub fn from_file(path: PathBuf) -> Result<(Self, FileId)> {
         let mut file = File::open(path.clone())?;
         let mut contents = String::new();
@@ -404,10 +409,7 @@ impl StarlarkLexer {
 
     pub fn lex_db_file(&mut self, file_id: FileId) -> Result<TokenSink> {
         let file = self.files.get(file_id)?;
-
         let input = file.source();
-
-        println!("input: {}", input);
 
         let mut lexer = TokenKind::lexer(input);
         let mut token_sink = TokenSink::new(file_id, file.name().to_string().into());
@@ -528,10 +530,6 @@ impl StarlarkLexer {
             .open(&STDIN_PATH)
             .expect("Could not open <STDIN>. This is a bug and should be reported.");
 
-        // let mut file_id = self.files.add(
-        //     STDIN_PATH.to_path_buf().to_string_lossy().to_string(),
-        //     String::new(),
-        // );
         // get the last segment of STDIN_PATH
         let stdin = STDIN_PATH
             .file_name()
@@ -553,30 +551,7 @@ impl StarlarkLexer {
         // write the source to the file
         stdin.write_all(source.as_bytes());
 
-        // let token_sink = self.lex_db_file(file_id).expect("Unable to lex source.");
-
-        // self.set_token_sink(token_sink.clone());
-
-        // token_sink
-
         let mut lexer = TokenKind::lexer(source);
-        // let file_id = self.file_ids[0];
-        // assert!(
-        //     self.file_ids.len() == 1,
-        //     "Only supported for STDIN/string literal use case"
-        // );
-
-        // create file if it doesn't already exist, otherwise truncate it
-        let mut stdin = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .open(&STDIN_PATH)
-            .expect("Could not open <STDIN>. This is a bug and should be reported.");
-
-        // write the source to the file
-        stdin.write_all(source.as_bytes());
 
         let mut token_sink = TokenSink::new(file_id, STDIN_PATH.to_path_buf());
         let mut current_unknown_token: Option<Token> = None;
@@ -976,6 +951,13 @@ impl TokenKind {
             TokenKind::EOF => SyntaxKind::EOF,
             TokenKind::DSLASHEQ => SyntaxKind::SLASHEQ, // TODO: FIX ME (this is a placeholder for now as need to fix syntaxgen)
         }
+    }
+
+    pub fn is_whitespace(self) -> bool {
+        matches!(
+            self,
+            TokenKind::WHITESPACE // TokenKind::WHITESPACE | TokenKind::NEWLINE | TokenKind::INDENT | TokenKind::OUTDENT
+        )
     }
 }
 

@@ -1,6 +1,8 @@
 use std::mem;
 
-use crate::{parser::ParseError, parsing::TreeSink, SyntaxKind, T};
+use rowan::GreenNode;
+
+use crate::{parser::ParseError, parsing::TreeSink, syntax_error::SyntaxError, SyntaxKind};
 
 /// `Parser` produces a flat list of `Events`'s. They are converted to a tree structure in a
 /// separate pass via a `TreeSink`.
@@ -47,10 +49,11 @@ impl Event {
 pub(super) fn process(mut sink: &mut dyn TreeSink, mut events: Vec<Event>) {
     let mut forward_parents = Vec::new();
 
+    tracing::trace!("Processing events: {:?}", events);
     for i in 0..events.len() {
         match mem::replace(&mut events[i], Event::tombstone()) {
             Event::Start {
-                kind: SyntaxKind::WHITESPACE,
+                kind: SyntaxKind::TOMBSTONE,
                 ..
             } => {}
             Event::Start {
@@ -94,6 +97,4 @@ pub(super) fn process(mut sink: &mut dyn TreeSink, mut events: Vec<Event>) {
             Event::FinishError(_) => unimplemented!(),
         }
     }
-
-    sink.finish_node()
 }

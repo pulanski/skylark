@@ -1,44 +1,35 @@
+mod text_token_source;
 mod text_tree_sink;
 
 use crate::{
-    lexer::{tokenize, Token},
+    lexer::Token,
     parser::{self, ParseError},
     syntax_error::SyntaxError,
-    text_token_source, SyntaxKind,
+    StarlarkLexer, SyntaxKind,
 };
 use rowan::GreenNode;
 
 pub(crate) fn parse_text(text: &str) -> (GreenNode, Vec<SyntaxError>) {
     // Tokenize the source into a token stream and a list of errors (i.e. unrecognized tokens)
-    let (tokens, errors) = tokenize(text);
+    let mut lexer = StarlarkLexer::new();
+
+    let token_sink = lexer.tokenize(text);
+    let tokens = token_sink.tokens();
+
+    if token_sink.has_errors() {
+        lexer.emit_errors();
+    }
+
+    tracing::debug!("Tokens: {:#?}", tokens);
 
     let mut token_source = text_token_source::TextTokenSource::new(tokens.clone());
-    let mut tree_sink = text_tree_sink::TextTreeSink::new(tokens);
+    tracing::debug!("Token Source: {:#?}", token_source);
+    let mut tree_sink = text_tree_sink::TextTreeSink::new(tokens.clone());
+    tracing::debug!("Tree Sink: {:#?}", tree_sink);
 
     parser::parse(&mut token_source, &mut tree_sink);
-    // let (tree, mut parser_errors) = parser::parse(&mut token_source, tree_sink);
 
-    // v1
-    // let tokens = tokenize(text);
-
-    // let mut token_source = text_token_source::TextTokenSource::new(text, &tokens);
-    // let mut tree_sink = text_tree_sink::TextTreeSink::new(text, &tokens);
-    // parse(&mut token_source, &mut tree_sink);
-    // tree_sink.finish()
-
-    // v2
-    //     let (tokens, errors) = tokenize::<LuaLexer>(text);
-
-    //     let mut token_source = TextTokenSource::new(text, &tokens);
-    //     let tree_sink = DeferedTextTreeSink::new(text, &tokens, DEFER_AMOUNT);
-
-    //     let (tree, mut parser_errors) = parser::parse(&mut token_source, tree_sink);
-
-    //     parser_errors.extend(errors);
-
-    //     (tree, parser_errors)
-    // }
-    todo!()
+    tree_sink.finish()
 }
 
 /// The `TokenSource` trait provides an abstraction over the source of tokens, allowing for

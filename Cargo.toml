@@ -10,6 +10,7 @@ members = [
     "crates/bin/design/compilerd",
     "crates/bin/design/pb_cache",
     "crates/bin/devtools/syntaxgen",
+    "crates/bin/devtools/damadama",
     "crates/bin/mini-inkwell",
     "crates/lib/inkwell_build",
     "crates/lib/third-party/salsa",

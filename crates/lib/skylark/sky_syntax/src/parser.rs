@@ -1,11 +1,11 @@
 use crate::ast::AstNode;
+use crate::ast::SyntaxKind::*;
 use crate::event::{self, Event};
 pub use crate::lang::{SyntaxElement, SyntaxNode, SyntaxToken};
 use crate::lexer::{FileId, Span, Token, TokenStream};
 use crate::parsing::{TokenSource, TreeSink};
 use crate::syntax_tree::SyntaxTreeBuilder;
 use crate::token_set::TokenSet;
-use crate::{ast::SyntaxKind::*, lexer::TokenKind};
 use crate::{grammar, SyntaxKind};
 use anyhow::Result;
 use codespan_reporting::files::SimpleFiles;
@@ -77,21 +77,6 @@ impl StarlarkParser {
 
         Ok(())
     }
-
-    pub(crate) fn parse(&self) -> Result<TextTreeSink> {
-        tracing::debug!("Parsing files...");
-
-        // let source_file = self.parse
-
-        tracing::debug!("Finished parsing files");
-        tracing::debug!("Collecting syntax errors...");
-
-        // let tree_sink = TreeSink::new(Box::new(syntax_tree));
-
-        todo!("Construct File AST from syntax tree and collect syntax errors");
-
-        // Ok(tree_sink)
-    }
 }
 
 use codespan_reporting::diagnostic::{Diagnostic, Label};
@@ -152,6 +137,12 @@ pub struct TextTreeSink {
     pub syntax_errors: Vec<Diagnostic<FileId>>,
 }
 
+impl Default for TextTreeSink {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TextTreeSink {
     pub fn new() -> Self {
         Self {
@@ -160,8 +151,6 @@ impl TextTreeSink {
         }
     }
 }
-
-// ----
 
 /// The [`Parser`] and its methods are responsible for processing and parsing tokens
 /// from a given input. The parser **does not** actually parse things itself but **provides
@@ -221,6 +210,7 @@ impl<'t> Parser<'t> {
     /// parser itself and would need to be fixed.
     pub fn nth(&self, n: usize) -> SyntaxKind {
         assert!(n <= 3, "Cannot lookahead more than 3 tokens");
+
         let steps = self.steps.get();
         assert!(steps <= 10_000_000, "Infinite loop detected within the parser. Aborting. This is a bug. Please report it at https://github.com/pulanski/skylark/issues/new");
         self.steps.set(steps + 1);
@@ -229,29 +219,40 @@ impl<'t> Parser<'t> {
     }
 
     pub fn finish(self) -> Vec<Event> {
+        tracing::trace!(
+            "Finished parsing token stream into events: {:?}",
+            self.events
+        );
         self.events
     }
 
     /// Checks if the current token is `kind`.
     ///
-    /// This is a convenience method for performing `self.nth_at(0, kind)`
-    /// in a more ergonomic fashion.
+    /// This is a _convenience method_ for performing `self.nth_at(0, kind)`
+    /// in a _more ergonomic fashion_.
     pub(crate) fn at(&self, kind: SyntaxKind) -> bool {
+        tracing::trace!("Checking if current token is {:?}", kind);
         self.nth_at(0, kind)
     }
 
     /// Checks if the token `n` steps ahead of the current token is `kind`.
     pub(crate) fn nth_at(&self, n: usize, kind: SyntaxKind) -> bool {
+        if n > 0 {
+            tracing::trace!("Checking if token {} steps ahead is {:?}", n, kind);
+        }
         self.token_source.lookahead_nth(n).kind().to_syntax() == kind
     }
 
     /// Checks if the current token is in contained within the
     /// given [`TokenSet`], `kinds`.
     pub(crate) fn at_ts(&self, kinds: TokenSet) -> bool {
+        tracing::trace!("Checking if current token is in {:?}", kinds);
         kinds.contains(self.current())
     }
 
+    /// Pushes an [`Event`] onto the event stream.
     fn push_event(&mut self, event: Event) {
+        // tracing::trace!("Pushing event onto event stream: {:?}", event);
         self.events.push(event)
     }
 
@@ -263,40 +264,48 @@ impl<'t> Parser<'t> {
         Marker::new(pos)
     }
 
-    // We don't have to worry about the `at_*` methods being called since we aren't
-    // gluing tokens together. The tokens are already glued together by the lexer.
-    // fn at_composite2(&self, n: usize, k1: SyntaxKind, k2: SyntaxKind) -> bool {
-    //     let t1 = self.token_source.lookahead_nth(n);
-    //     let t2 = self.token_source.lookahead_nth(n + 1);
-    //     t1.kind().to_syntax() == k1 && t1.is_jointed_to_next && t2.kind().to_syntax() == k2
-    // }
-    // fn at_composite3(&self, n: usize, k1: SyntaxKind, k2: SyntaxKind, k3: SyntaxKind) -> bool {
-    //     let t1 = self.token_source.lookahead_nth(n);
-    //     let t2 = self.token_source.lookahead_nth(n + 1);
-    //     let t3 = self.token_source.lookahead_nth(n + 2);
-    //     (t1.kind == k1 && t1.is_jointed_to_next)
-    //         && (t2.kind == k2 && t2.is_jointed_to_next)
-    //         && t3.kind == k3
-    // }
-
     /// Checks if the current token is contextual keyword with text `t`.
     pub(crate) fn at_contextual_kw(&self, kw: &str) -> bool {
         self.token_source.is_keyword(kw)
     }
 
+    /// **Bumps** the parser forward if the current token is `kind`.
+    /// Otherwise, **panics**.
+    ///
+    /// ## Example
+    ///
+    /// ```starlark
+    /// x = 5   =>   x = 5
+    /// ^ bump         ^ new current token
+    /// ```
+    ///
+    /// ## Panics
+    ///
+    /// Panics if the current token is not `kind`.
     pub(crate) fn bump(&mut self, kind: SyntaxKind) {
-        assert!(self.eat(kind), "kind != {kind:?}");
+        tracing::trace!("Bumping parser forward over {:?}", kind);
+        assert!(
+            self.eat(kind),
+            "Attempted to bump token that did not match {kind:?}"
+        );
     }
 
+    /// **Bumps** the parser forward without checking the `kind` of the current token.
+    /// This is useful for when you want to consume a token without checking its kind.
+    /// For example, when you want to consume a token that is not a keyword.
     pub(crate) fn bump_any(&mut self) {
+        tracing::trace!("Bumping parser forward over {:?}", self.current());
         if self.current() == EOF {
             return;
         }
         self.do_bump(self.current());
     }
 
-    /// Consume the next token if `kind` matches.
+    /// **Consume** the next token if `kind` matches. Otherwise, **do nothing**. This is useful
+    /// for when you want to consume a token if it matches a certain kind, but don't want to
+    /// panic if it doesn't.
     pub(crate) fn eat(&mut self, kind: SyntaxKind) -> bool {
+        tracing::trace!("Attempting to eat token {:?}", kind);
         if !self.at(kind) {
             return false;
         }
@@ -305,6 +314,9 @@ impl<'t> Parser<'t> {
         true
     }
 
+    /// Handles **bumping the parser forward**, pushing an [`Event::Token`] onto the
+    /// event stream. This is a **internal** method to the parser used by [`Parser::bump`]
+    /// and [`Parser::bump_any`].
     fn do_bump(&mut self, kind: SyntaxKind) {
         self.token_source.bump();
         self.push_event(Event::Token {
@@ -360,7 +372,7 @@ impl<'t> Parser<'t> {
     // }
 }
 
-/// Parse given tokens into the given sink as a rust file.
+/// Parse given tokens into a syntax tree using the provided `TreeSink`.
 pub(crate) fn parse(token_source: &mut dyn TokenSource, tree_sink: &mut dyn TreeSink) {
     parse_from_tokens(token_source, tree_sink, grammar::root);
 }

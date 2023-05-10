@@ -1,0 +1,12 @@
+# General configurations
+
+# The output format for the generated files.
+output_format = "BUCK" # or "BUILD", "BUILD.bazel", or "BOTH"
+# NOTE: This is case-insensitive (i.e. "BUCK" and "buck" are equivalent)
+
+# Configurations specific to reindeer
+[reindeer]
+# The path to the reindeer.toml file This is where all vendored
+# dependencies are listed and the buckified dependencies are written
+# to.
+path = "third-party/rust/reindeer.toml"

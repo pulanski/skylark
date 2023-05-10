@@ -1,0 +1,1365 @@
+Manifest: Manifest {
+    package: None,
+    workspace: Some(
+        Workspace {
+            members: [
+                "crates/bin/apps/skylark",
+                "crates/bin/calc",
+                "crates/bin/design/parallel-compiler",
+                "crates/bin/design/smorgasbord",
+                "crates/bin/design/compilerd",
+                "crates/bin/design/pb_cache",
+                "crates/bin/devtools/syntaxgen",
+                "crates/bin/devtools/damadama",
+                "crates/bin/mini-inkwell",
+                "crates/lib/inkwell_build",
+                "crates/lib/third-party/salsa",
+                "crates/lib/skylark/sky_lexer",
+                "crates/lib/skylark/sky_syntax",
+            ],
+            package: Some(
+                PackageTemplate {
+                    authors: Some(
+                        [
+                            "<iopulanski@gmail.com>",
+                        ],
+                    ),
+                    categories: Some(
+                        [
+                            "development-tools",
+                            "command-line-utilities",
+                        ],
+                    ),
+                    description: Some(
+                        "",
+                    ),
+                    documentation: None,
+                    edition: Some(
+                        E2021,
+                    ),
+                    exclude: None,
+                    homepage: None,
+                    include: None,
+                    keywords: Some(
+                        [
+                            "build",
+                            "build-system",
+                            "build-tool",
+                            "starlark",
+                            "parser",
+                            "interpreter",
+                            "build-file",
+                        ],
+                    ),
+                    license: Some(
+                        "MIT",
+                    ),
+                    license_file: Some(
+                        "LICENSE",
+                    ),
+                    publish: Flag(
+                        true,
+                    ),
+                    readme: Path(
+                        "README.md",
+                    ),
+                    repository: Some(
+                        "https://github.com/pulanski/skylark",
+                    ),
+                    rust_version: Some(
+                        "1.68.0",
+                    ),
+                    version: Some(
+                        "0.1.0",
+                    ),
+                },
+            ),
+            default_members: [],
+            exclude: [],
+            metadata: None,
+            resolver: Some(
+                V2,
+            ),
+            dependencies: {
+                "allocative": Simple(
+                    "0.2.0",
+                ),
+                "always-assert": Simple(
+                    "0.1.3",
+                ),
+                "amplify": Simple(
+                    "3.14.1",
+                ),
+                "annotate-snippets": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.9.0",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "color",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "anyhow": Simple(
+                    "1.0.70",
+                ),
+                "anymap": Simple(
+                    "0.12.1",
+                ),
+                "aquamarine": Simple(
+                    "0.3.0",
+                ),
+                "arbitrary": Simple(
+                    "1.1.0",
+                ),
+                "arc-swap": Simple(
+                    "1.6.0",
+                ),
+                "argfile": Simple(
+                    "0.1.0",
+                ),
+                "arrayvec": Simple(
+                    "0.7.2",
+                ),
+                "assert_matches": Simple(
+                    "1.5",
+                ),
+                "async-recursion": Simple(
+                    "1.0",
+                ),
+                "async-stream": Simple(
+                    "0.3.2",
+                ),
+                "async-trait": Simple(
+                    "0.1.24",
+                ),
+                "autocfg": Simple(
+                    "1.1.0",
+                ),
+                "backtrace": Simple(
+                    "0.3.67",
+                ),
+                "bincode": Simple(
+                    "1.3",
+                ),
+                "bitflags": Simple(
+                    "2.1.0",
+                ),
+                "bumpalo": Simple(
+                    "3.12.0",
+                ),
+                "byteorder": Simple(
+                    "1.4.3",
+                ),
+                "bytes": Simple(
+                    "1.4.0",
+                ),
+                "cached": Simple(
+                    "0.43.0",
+                ),
+                "cargo-emit": Simple(
+                    "0.2.1",
+                ),
+                "cargo_metadata": Simple(
+                    "0.15.4",
+                ),
+                "cargo_toml": Simple(
+                    "0.15.2",
+                ),
+                "cfg-if": Simple(
+                    "1.0.0",
+                ),
+                "chalk-ir": Simple(
+                    "0.90.0",
+                ),
+                "chalk-recursive": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.90.0",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [],
+                        optional: false,
+                        default_features: false,
+                        package: None,
+                    },
+                ),
+                "chalk-solve": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.90.0",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [],
+                        optional: false,
+                        default_features: false,
+                        package: None,
+                    },
+                ),
+                "chrono": Simple(
+                    "=0.4.19",
+                ),
+                "clap": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "4",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "error-context",
+                            "help",
+                            "std",
+                            "usage",
+                            "derive",
+                        ],
+                        optional: false,
+                        default_features: false,
+                        package: None,
+                    },
+                ),
+                "clap_derive": Simple(
+                    "4.0.7",
+                ),
+                "codespan": Simple(
+                    "0.11.1",
+                ),
+                "codespan-reporting": Simple(
+                    "0.11.1",
+                ),
+                "common-path": Simple(
+                    "1.0.0",
+                ),
+                "constant_time_eq": Simple(
+                    "0.2.4",
+                ),
+                "convert_case": Simple(
+                    "0.6.0",
+                ),
+                "cov-mark": Simple(
+                    "1.1.0",
+                ),
+                "crossbeam": Simple(
+                    "0.8.2",
+                ),
+                "crossbeam-channel": Simple(
+                    "0.5.7",
+                ),
+                "crossbeam-epoch": Simple(
+                    "0.9.14",
+                ),
+                "crossterm": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.26.1",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "event-stream",
+                        ],
+                        optional: false,
+                        default_features: false,
+                        package: None,
+                    },
+                ),
+                "csv": Simple(
+                    "1.1",
+                ),
+                "ctor": Simple(
+                    "0.2.0",
+                ),
+                "derivative": Simple(
+                    "2.2.0",
+                ),
+                "derive-new": Simple(
+                    "0.5.9",
+                ),
+                "derive_arbitrary": Simple(
+                    "1.1.0",
+                ),
+                "derive_more": Simple(
+                    "0.99.17",
+                ),
+                "dirs-next": Simple(
+                    "2.0.0",
+                ),
+                "dissimilar": Simple(
+                    "1.0.6",
+                ),
+                "doc-comment": Simple(
+                    "0.3.3",
+                ),
+                "dot": Simple(
+                    "0.1.4",
+                ),
+                "downcast-rs": Simple(
+                    "1.2.0",
+                ),
+                "drop_bomb": Simple(
+                    "0.1.5",
+                ),
+                "dunce": Simple(
+                    "1.0.3",
+                ),
+                "dyn-clone": Simple(
+                    "1.0.11",
+                ),
+                "either": Simple(
+                    "1.8",
+                ),
+                "ena": Simple(
+                    "0.14.0",
+                ),
+                "enum-iterator": Simple(
+                    "1.4.0",
+                ),
+                "enum-map": Simple(
+                    "2.5.0",
+                ),
+                "erased-serde": Simple(
+                    "0.3.20",
+                ),
+                "expect-test": Simple(
+                    "1.4.0",
+                ),
+                "fancy-regex": Simple(
+                    "0.11.0",
+                ),
+                "fern": Simple(
+                    "0.6.1",
+                ),
+                "flate2": Simple(
+                    "1.0.22",
+                ),
+                "fnv": Simple(
+                    "1.0.7",
+                ),
+                "fork": Simple(
+                    "0.1.21",
+                ),
+                "fsevent-sys": Simple(
+                    "4.1.0",
+                ),
+                "futures": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.3.24",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "async-await",
+                            "compat",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "futures-intrusive": Simple(
+                    "0.5.0",
+                ),
+                "fxhash": Simple(
+                    "0.2.1",
+                ),
+                "gazebo": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.8.1",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "str_pattern_extensions",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "getset": Simple(
+                    "0.1.2",
+                ),
+                "glob": Simple(
+                    "0.3.0",
+                ),
+                "globset": Simple(
+                    "0.4.7",
+                ),
+                "hex": Simple(
+                    "0.4.3",
+                ),
+                "home": Simple(
+                    "0.5.3",
+                ),
+                "http": Simple(
+                    "0.2",
+                ),
+                "httparse": Simple(
+                    "1.7.1",
+                ),
+                "humansize": Simple(
+                    "2.1.3",
+                ),
+                "humantime": Simple(
+                    "2.1.0",
+                ),
+                "indent_write": Simple(
+                    "2.2.0",
+                ),
+                "indenter": Simple(
+                    "0.3.3",
+                ),
+                "indexmap": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "1.9.2",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "serde-1",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "indicatif": Simple(
+                    "0.17.3",
+                ),
+                "indoc": Simple(
+                    "2.0.0",
+                ),
+                "inkwell": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.1.1",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "llvm15-0",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "insta": Simple(
+                    "1.29.0",
+                ),
+                "inventory": Simple(
+                    "0.3.5",
+                ),
+                "is_proc_translated": Simple(
+                    "0.1.1",
+                ),
+                "itertools": Simple(
+                    "0.10.5",
+                ),
+                "itoa": Simple(
+                    "1.0.6",
+                ),
+                "jemalloc-ctl": Simple(
+                    "0.5.0",
+                ),
+                "jemallocator": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.5.0",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "profiling",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "lalrpop-util": Simple(
+                    "0.19.9",
+                ),
+                "lazy_static": Simple(
+                    "1.4.0",
+                ),
+                "libc": Simple(
+                    "0.2.141",
+                ),
+                "linked-hash-map": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.5",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "serde_impl",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "load_file": Simple(
+                    "1.0.1",
+                ),
+                "log": Simple(
+                    "0.4.17",
+                ),
+                "logos": Simple(
+                    "0.13.0",
+                ),
+                "logos-derive": Simple(
+                    "0.13.0",
+                ),
+                "lsp-server": Simple(
+                    "0.7.0",
+                ),
+                "lsp-types": Simple(
+                    "0.94.0",
+                ),
+                "maplit": Simple(
+                    "1.0.2",
+                ),
+                "memchr": Simple(
+                    "2.4.1",
+                ),
+                "memoffset": Simple(
+                    "0.8.0",
+                ),
+                "miette": Simple(
+                    "5.5.0",
+                ),
+                "mimalloc": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.1.29",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [],
+                        optional: false,
+                        default_features: false,
+                        package: None,
+                    },
+                ),
+                "mime": Simple(
+                    "0.3.16",
+                ),
+                "mio": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.8.6",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "os-ext",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "multimap": Simple(
+                    "0.9.0",
+                ),
+                "nom": Simple(
+                    "7.1.3",
+                ),
+                "notify": Simple(
+                    "5.1.0",
+                ),
+                "notify-debouncer-mini": Simple(
+                    "0.2.1",
+                ),
+                "nu-ansi-term": Simple(
+                    "0.47.0",
+                ),
+                "num-derive": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.3.3",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "full-syntax",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "num-traits": Simple(
+                    "0.2.15",
+                ),
+                "num_enum": Simple(
+                    "0.6.0",
+                ),
+                "object": Simple(
+                    "0.30.3",
+                ),
+                "objekt-clonable": Simple(
+                    "0.2.2",
+                ),
+                "once_cell": Simple(
+                    "1.17.1",
+                ),
+                "oorandom": Simple(
+                    "11.1.3",
+                ),
+                "ordered-float": Simple(
+                    "3.7.0",
+                ),
+                "os_str_bytes": Simple(
+                    "6.0",
+                ),
+                "owo-colors": Simple(
+                    "3.5.0",
+                ),
+                "parking_lot": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.12.1",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "serde",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "paste": Simple(
+                    "1.0",
+                ),
+                "path-clean": Simple(
+                    "1.0.1",
+                ),
+                "petgraph": Simple(
+                    "0.6.3",
+                ),
+                "pin-project": Simple(
+                    "1.0.12",
+                ),
+                "plist": Simple(
+                    "1.4.3",
+                ),
+                "pretty-hex": Simple(
+                    "0.3.0",
+                ),
+                "pretty_assertions": Simple(
+                    "1.2.1",
+                ),
+                "pretty_assertions_sorted": Simple(
+                    "1.2.1",
+                ),
+                "proc-macro2": Simple(
+                    "1.0.51",
+                ),
+                "prost": Simple(
+                    "0.11.6",
+                ),
+                "prost-types": Simple(
+                    "0.11.6",
+                ),
+                "protoc-bin-vendored": Simple(
+                    "3.0.0",
+                ),
+                "pulldown-cmark": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.9.2",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [],
+                        optional: false,
+                        default_features: false,
+                        package: None,
+                    },
+                ),
+                "pulldown-cmark-to-cmark": Simple(
+                    "10.0.4",
+                ),
+                "quote": Simple(
+                    "1.0.23",
+                ),
+                "radix_trie": Simple(
+                    "0.2.1",
+                ),
+                "rand": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.8.5",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "small_rng",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "rand_chacha": Simple(
+                    "0.3",
+                ),
+                "rand_regex": Simple(
+                    "0.15.1",
+                ),
+                "rand_xorshift": Simple(
+                    "0.3.0",
+                ),
+                "rayon": Simple(
+                    "1.7.0",
+                ),
+                "redis": Simple(
+                    "0.23.0",
+                ),
+                "ref-cast": Simple(
+                    "1.0.0",
+                ),
+                "regex": Simple(
+                    "1.7.1",
+                ),
+                "relative-path": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "1.7.0",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "serde",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "rowan": Simple(
+                    "0.15.10",
+                ),
+                "rstest": Simple(
+                    "0.17.0",
+                ),
+                "rustc-hash": Simple(
+                    "1.1.0",
+                ),
+                "rustc-serialize": Simple(
+                    "0.3.24",
+                ),
+                "rustix": Simple(
+                    "0.0.0",
+                ),
+                "scoped-tls": Simple(
+                    "1.0.0",
+                ),
+                "scopeguard": Simple(
+                    "1.1.0",
+                ),
+                "semver": Simple(
+                    "1.0.16",
+                ),
+                "sequence_trie": Simple(
+                    "0.3.6",
+                ),
+                "serde": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "1.0.158",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "derive",
+                            "rc",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "serde_bytes": Simple(
+                    "0.11.9",
+                ),
+                "serde_json": Simple(
+                    "1.0.95",
+                ),
+                "serde_repr": Simple(
+                    "0.1.12",
+                ),
+                "sharded-slab": Simple(
+                    "0.1.4",
+                ),
+                "shlex": Simple(
+                    "1.0",
+                ),
+                "shrinkwraprs": Simple(
+                    "0.3.0",
+                ),
+                "signal-hook": Simple(
+                    "0.3.9",
+                ),
+                "signal-hook-mio": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.2.3",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "support-v0_7",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "signal-hook-registry": Simple(
+                    "1.4.1",
+                ),
+                "siphasher": Simple(
+                    "0.3.3",
+                ),
+                "slab": Simple(
+                    "0.4.7",
+                ),
+                "slog": Simple(
+                    "2.7.0",
+                ),
+                "smallvec": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "1.10",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "const_generics",
+                            "const_new",
+                            "serde",
+                            "specialization",
+                            "union",
+                            "write",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "smartstring": Simple(
+                    "1.0.1",
+                ),
+                "smol_str": Simple(
+                    "0.1.24",
+                ),
+                "socket2": Simple(
+                    "0.5.2",
+                ),
+                "static_assertions": Simple(
+                    "1.1.0",
+                ),
+                "str_sim": Simple(
+                    "0.1.2",
+                ),
+                "strsim": Simple(
+                    "0.10.0",
+                ),
+                "strum": Simple(
+                    "0.24.1",
+                ),
+                "strum_macros": Simple(
+                    "0.19.3",
+                ),
+                "symlink": Simple(
+                    "0.1.0",
+                ),
+                "syn": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "2.0.13",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "extra-traits",
+                            "full",
+                            "visit",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "sync_wrapper": Simple(
+                    "0.1.0",
+                ),
+                "sys-info": Simple(
+                    "0.9.1",
+                ),
+                "sys-locale": Simple(
+                    "0.3.0",
+                ),
+                "take_mut": Simple(
+                    "0.2.2",
+                ),
+                "termios": Simple(
+                    "0.3",
+                ),
+                "test-case": Simple(
+                    "3.1.0",
+                ),
+                "text-size": Simple(
+                    "1.1.0",
+                ),
+                "textwrap": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.14.0",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "unicode-width",
+                        ],
+                        optional: false,
+                        default_features: false,
+                        package: None,
+                    },
+                ),
+                "thiserror": Simple(
+                    "1.0.40",
+                ),
+                "tinyvec": Simple(
+                    "1.5.1",
+                ),
+                "tokio": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "1.27.0",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "full",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "tokio-stream": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.1.4",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "fs",
+                            "io-util",
+                            "net",
+                            "sync",
+                            "time",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "tokio-util": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.6",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "full",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "toml": Simple(
+                    "0.7.3",
+                ),
+                "tonic": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.9.1",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "tls",
+                            "tls-webpki-roots",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "tonic-build": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.8.4",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "prost",
+                            "cleanup-markdown",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "tower": Simple(
+                    "0.4",
+                ),
+                "tower-layer": Simple(
+                    "0.3.2",
+                ),
+                "tower-service": Simple(
+                    "0.3.2",
+                ),
+                "tracing": Simple(
+                    "0.1.37",
+                ),
+                "tracing-indicatif": Simple(
+                    "0.3.0",
+                ),
+                "tracing-log": Simple(
+                    "0.1.3",
+                ),
+                "tracing-subscriber": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.3",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "env-filter",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "triomphe": Simple(
+                    "0.1.8",
+                ),
+                "typed-arena": Simple(
+                    "2.0.2",
+                ),
+                "typed-builder": Simple(
+                    "0.14.0",
+                ),
+                "ulid": Simple(
+                    "1.0.0",
+                ),
+                "ungrammar": Simple(
+                    "1.16.1",
+                ),
+                "unicode-segmentation": Simple(
+                    "1.7",
+                ),
+                "unicode-width": Simple(
+                    "0.1.9",
+                ),
+                "unindent": Simple(
+                    "0.2.1",
+                ),
+                "url": Simple(
+                    "2.3.1",
+                ),
+                "uuid": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "1.3.0",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "walkdir": Simple(
+                    "2.3.2",
+                ),
+                "which": Simple(
+                    "4.3.0",
+                ),
+                "whoami": Simple(
+                    "1.3.0",
+                ),
+                "winapi": Detailed(
+                    DependencyDetail {
+                        version: Some(
+                            "0.3.9",
+                        ),
+                        registry: None,
+                        registry_index: None,
+                        path: None,
+                        inherited: false,
+                        git: None,
+                        branch: None,
+                        tag: None,
+                        rev: None,
+                        features: [
+                            "everything",
+                        ],
+                        optional: false,
+                        default_features: true,
+                        package: None,
+                    },
+                ),
+                "xflags": Simple(
+                    "0.3.1",
+                ),
+                "xshell": Simple(
+                    "0.2.3",
+                ),
+                "zip": Simple(
+                    "0.5",
+                ),
+            },
+        },
+    ),
+    dependencies: {},
+    dev_dependencies: {},
+    build_dependencies: {},
+    target: {},
+    features: {},
+    replace: {},
+    patch: {},
+    lib: None,
+    profile: Profiles {
+        release: None,
+        dev: None,
+        test: None,
+        bench: None,
+        doc: None,
+        custom: {},
+    },
+    badges: Badges {
+        appveyor: None,
+        circle_ci: None,
+        gitlab: None,
+        travis_ci: None,
+        codecov: None,
+        coveralls: None,
+        is_it_maintained_issue_resolution: None,
+        is_it_maintained_open_issues: None,
+        maintenance: Maintenance {
+            status: None,
+        },
+    },
+    bin: [],
+    bench: [],
+    test: [],
+    example: [],
+}

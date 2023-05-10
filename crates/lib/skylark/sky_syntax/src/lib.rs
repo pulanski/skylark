@@ -42,7 +42,6 @@ mod parser;
 mod parsing;
 mod syntax_error;
 mod syntax_tree;
-mod text_token_source;
 mod token_set;
 
 pub use crate::{
@@ -59,60 +58,6 @@ use ast::AstNode;
 use rowan::GreenNode;
 use std::{marker::PhantomData, sync::Arc};
 use syntax_error::SyntaxError;
-
-// /// `Parse` is the result of the parsing: a syntax tree and a collection of errors.
-// ///
-// /// Note that we always produce a syntax tree, event for completely invalid files.
-// #[derive(Debug, PartialEq, Eq)]
-// pub struct Parse<T> {
-//     green: GreenNode,
-//     errors: Arc<[SyntaxError]>,
-//     _ty: PhantomData<fn() -> T>,
-// }
-
-// impl<T> Clone for Parse<T> {
-//     fn clone(&self) -> Parse<T> {
-//         Parse {
-//             green: self.green.clone(),
-//             errors: self.errors.clone(),
-//             _ty: PhantomData,
-//         }
-//     }
-// }
-// impl<T> Parse<T> {
-//     fn new(green: GreenNode, errors: Vec<SyntaxError>) -> Parse<T> {
-//         Parse {
-//             green,
-//             errors: Arc::from(errors),
-//             _ty: PhantomData,
-//         }
-//     }
-//     pub fn syntax_node(&self) -> SyntaxNode {
-//         SyntaxNode::new_root(self.green.clone())
-//     }
-// }
-// impl<T: AstNode> Parse<T> {
-//     pub fn into_syntax(self) -> Parse<SyntaxNode> {
-//         Parse {
-//             green: self.green,
-//             errors: self.errors,
-//             _ty: PhantomData,
-//         }
-//     }
-//     pub fn tree(&self) -> T {
-//         T::cast(self.syntax_node()).unwrap()
-//     }
-//     pub fn errors(&self) -> &[SyntaxError] {
-//         &self.errors
-//     }
-//     pub fn ok(self) -> Result<T, Arc<[SyntaxError]>> {
-//         if self.errors.is_empty() {
-//             Ok(self.tree())
-//         } else {
-//             Err(self.errors)
-//         }
-//     }
-// }
 
 /// The [`Parse`] represents the **result** of a **parsing operation** on a **piece of source code**.
 /// It contains a _syntax tree_ (`green`), a _collection of syntax errors_ (`errors`), and a
@@ -164,6 +109,7 @@ impl<T> Parse<T> {
 
     /// Returns a `SyntaxNode` constructed from the `Parse` instance's `green` field.
     pub fn syntax_node(&self) -> SyntaxNode {
+        tracing::trace!("Constructing syntax node from parse: {:?}", self.green);
         SyntaxNode::new_root(self.green.clone())
     }
 }
@@ -201,4 +147,52 @@ impl<T: AstNode> Parse<T> {
             Err(self.errors)
         }
     }
+}
+
+/// Matches a `SyntaxNode` against an `ast` type.
+///
+/// # Example:
+///
+/// ```ignore
+/// match_ast! {
+///     match node {
+///         ast::CallExpr(it) => { ... },
+///         ast::MethodCallExpr(it) => { ... },
+///         ast::AssignStmt(it) => { ... },
+///         _ => None,
+///     }
+/// }
+/// ```
+///
+/// ```ignore
+/// match_ast! {
+///     match node {
+///         ast::CallExpr(it) | ast::MethodCallExpr(it) | ast::AssignStmt(it) => { ... }
+///     }
+/// }
+/// ```
+#[macro_export]
+macro_rules! match_ast {
+    (match $node:ident { $($tt:tt)* }) => { match_ast!(match ($node) { $($tt)* }) };
+    (match ($node:expr) {
+        $( ast::$ast:ident($it:ident) => $res:expr, )*
+        _ => $catch_all:expr $(,)?
+    }) => {{
+        $( if let Some($it) = ast::$ast::cast($node.clone()) { $res } else )*
+        { $catch_all }
+    }};
+    (match ($node:expr) {
+        $( ast::$ast:ident($it:ident) )|* => $res:expr,
+        _ => $catch_all:expr $(,)?
+    }) => {{
+        $( if let Some($it) = ast::$ast::cast($node.clone()) { $res } else )*
+        { $catch_all }
+    }};
+    (match ($node:expr) {
+        $( ast::$ast:ident(_) )|* => $res:expr,
+        _ => $catch_all:expr $(,)?
+    }) => {{
+        $( if let Some(_) = ast::$ast::cast($node.clone()) { $res } else )*
+        { $catch_all }
+    }};
 }

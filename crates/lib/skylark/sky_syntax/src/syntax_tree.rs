@@ -1,4 +1,4 @@
-use rowan::{GreenNodeBuilder, Language, TextRange, TextSize};
+use rowan::{GreenNode, GreenNodeBuilder, Language, TextRange};
 
 use crate::{
     lang::Starlark, lexer::Token, parser::ParseError, syntax_error::SyntaxError, SyntaxKind,
@@ -26,7 +26,7 @@ impl SyntaxTreeBuilder {
     }
 
     /// Finishes the syntax tree and returns the root node.
-    pub fn finish(mut self) -> SyntaxNode {
+    pub fn finish(self) -> SyntaxNode {
         let root = self.builder.finish();
         SyntaxNode::new_root(root)
     }
@@ -54,5 +54,9 @@ impl SyntaxTreeBuilder {
             "Syntax error encountered".to_owned(),
             range,
         ));
+    }
+
+    pub fn finish_raw(self) -> (GreenNode, Vec<SyntaxError>) {
+        (self.builder.finish(), self.errors)
     }
 }

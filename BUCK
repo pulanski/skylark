@@ -17,6 +17,11 @@ alias(
 )
 
 alias(
+    name = "damadama",
+    actual = "//crates/bin/devtools/damadama:damadama",
+)
+
+alias(
     name = "parallel-compiler",
     actual = "//crates/bin/design/parallel-compiler:parallel-compiler",
 )

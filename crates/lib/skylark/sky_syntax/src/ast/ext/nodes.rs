@@ -1,7 +1,7 @@
 use std::{marker::PhantomData, sync::Arc};
 
 use crate::{
-    ast::{AstNode, Expression, File},
+    ast::{AstNode, File},
     parsing,
     syntax_error::SyntaxError,
     Parse, SyntaxKind, SyntaxNode,
@@ -29,28 +29,27 @@ impl Parse<File> {
         //     writeln!(buf, "error {:?}: {}", err.location(), err.kind()).unwrap();
         // }
         // buf
-        let mut s = String::new();
-        s.push_str(&format!("{:#?}", self.syntax_node()));
-        s.push_str(&format_errors(self.errors()));
-        s
+
+        // let mut s = String::new();
+        // s.push_str(&format!("{:#?}", self.syntax_node()));
+        // s.push_str(&format_errors(self.errors()));
+        // s
+
+        let mut buf = format!("{:#?}", self.tree().syntax());
+        buf.push_str(&format_errors(self.errors()));
+        // for err in self.errors.iter() {
+        //     writeln!(buf, "error {:?}: {}", err.location(), err.kind()).unwrap();
+        // }
+        buf
     }
-    // /// Parses the `SourceFile` again but with the given modification applied.
-    // pub fn reparse(&self, indel: &Indel) -> Parse<SourceFile> {
-    //     // TODO: Implement something smarter here.
-    //     self.full_reparse(indel)
-    // }
-    // /// Performs a "reparse" of the `SourceFile` after applying the specified modification by
-    // /// simply parsing the entire thing again.
-    // fn full_reparse(&self, indel: &Indel) -> Parse<SourceFile> {
-    //     let mut text = self.tree().syntax().text().to_string();
-    //     indel.apply(&mut text);
-    //     File::parse(&text)
-    // }
 }
 
 impl File {
     pub fn parse(text: &str) -> Parse<File> {
         let (green, errors) = parsing::parse_text(text);
+        tracing::trace!("Parsed GreenNode {:#?}", green);
+        tracing::debug!("Completed parsing. Found {} errors", errors.len());
+
         let root = SyntaxNode::new_root(green.clone());
 
         // // errors.extend(validation::validate(&root));
@@ -78,6 +77,6 @@ Errors:
 =============================",
     );
     s.push('\n');
-    s.push_str(&format!("{:#?}", errors));
+    s.push_str(&format!("{errors:#?}"));
     s
 }

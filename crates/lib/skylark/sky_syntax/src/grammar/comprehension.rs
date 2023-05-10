@@ -19,7 +19,9 @@ use super::{decl, expr};
 /// ```starlark
 /// [x * 2 for x in range(10) if x % 2 == 0]
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn list_comp(p: &mut Parser) {
+    tracing::debug!("Parsing list comprehension expression");
     let m = p.start();
 
     p.expect(T!['[']);
@@ -29,6 +31,7 @@ pub(super) fn list_comp(p: &mut Parser) {
     }
     p.expect(T![']']);
 
+    tracing::debug!("Finished parsing list comprehension expression");
     m.complete(p, LIST_COMP);
 }
 
@@ -49,7 +52,9 @@ pub(super) fn list_comp(p: &mut Parser) {
 /// ```starlark
 /// {"x": 1, "y": 2}
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn dict_expr(p: &mut Parser) {
+    tracing::debug!("Parsing dictionary expression");
     let m = p.start();
     p.expect(T!['{']);
 
@@ -62,8 +67,9 @@ pub(super) fn dict_expr(p: &mut Parser) {
             entries(p);
         }
     }
-
     p.expect(T!['}']);
+
+    tracing::debug!("Finished parsing dictionary expression");
     m.complete(p, DICT_EXPR);
 }
 
@@ -83,8 +89,11 @@ pub(super) fn dict_expr(p: &mut Parser) {
 /// ```starlark
 /// {x: x * 2 for x in range(10) if x % 2 == 0}
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn dict_comp(p: &mut Parser) {
+    tracing::debug!("Parsing dictionary comprehension expression");
     let m = p.start();
+
     p.expect(T!['{']);
     entry(p);
 
@@ -93,6 +102,8 @@ pub(super) fn dict_comp(p: &mut Parser) {
     }
 
     p.expect(T!['}']);
+
+    tracing::debug!("Finished parsing dictionary comprehension expression");
     m.complete(p, DICT_COMP);
 }
 
@@ -111,7 +122,9 @@ pub(super) fn dict_comp(p: &mut Parser) {
 /// ```starlark
 /// "x": 1, "y": 2
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn entries(p: &mut Parser) {
+    tracing::debug!("Parsing entries");
     let m = p.start();
 
     entry(p);
@@ -119,6 +132,7 @@ pub(super) fn entries(p: &mut Parser) {
         entry(p);
     }
 
+    tracing::debug!("Finished parsing entries");
     m.complete(p, ENTRIES);
 }
 
@@ -138,13 +152,16 @@ pub(super) fn entries(p: &mut Parser) {
 /// ```starlark
 /// "x": 1
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn entry(p: &mut Parser) {
+    tracing::debug!("Parsing entry");
     let m = p.start();
 
     expr::test(p);
     p.expect(T![:]);
     expr::test(p);
 
+    tracing::debug!("Finished parsing entry");
     m.complete(p, ENTRY);
 }
 
@@ -165,8 +182,10 @@ pub(super) fn entry(p: &mut Parser) {
 /// for x in range(10)
 /// if x % 2 == 0
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(super) fn comp_clause(p: &mut Parser) {
     // TODO: add error diagnostics
+    tracing::debug!("Parsing comprehension clause");
     let m = p.start();
 
     if p.at(T![for]) {
@@ -183,4 +202,6 @@ pub(super) fn comp_clause(p: &mut Parser) {
         // p.error("expected 'for' or 'if'");
         m.abandon(p);
     }
+
+    tracing::debug!("Finished parsing comprehension clause");
 }

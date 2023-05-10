@@ -1,0 +1,90 @@
+[34mDEBUG[0m [2mskylark[0m[2m:[0m Parsing source: x = 1
+[34mDEBUG[0m [2msky_syntax::parsing[0m[2m:[0m tokens: TokenStream {
+    text: "x = 1",
+    tokens: [
+        Token {
+            kind: IDENTIFIER,
+            lexeme: "x",
+            span: Span {
+                start: 0,
+                end: 1,
+            },
+        },
+        Token {
+            kind: WHITESPACE,
+            lexeme: " ",
+            span: Span {
+                start: 1,
+                end: 2,
+            },
+        },
+        Token {
+            kind: EQ,
+            lexeme: "=",
+            span: Span {
+                start: 2,
+                end: 3,
+            },
+        },
+        Token {
+            kind: WHITESPACE,
+            lexeme: " ",
+            span: Span {
+                start: 3,
+                end: 4,
+            },
+        },
+        Token {
+            kind: FLOAT,
+            lexeme: "1",
+            span: Span {
+                start: 4,
+                end: 5,
+            },
+        },
+        Token {
+            kind: EOF,
+            lexeme: "",
+            span: Span {
+                start: 5,
+                end: 5,
+            },
+        },
+    ],
+    cursor: 0,
+    file_id: 0,
+    file_name: "/Users/jkersey/Library/Caches/sky_lexer/STDIN",
+}
+[34mDEBUG[0m [1mroot[0m[2m:[0m [2msky_syntax::grammar[0m[2m:[0m Parsing file for syntax tree
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Parsing statement. Current token: IDENTIFIER
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Parsing simple statement. Current token: IDENTIFIER
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Parsing small statement. Current token: IDENTIFIER
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Parsing expression statement. Current token: IDENTIFIER
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m[1mtest[0m[2m:[0m [2msky_syntax::grammar::expr[0m[2m:[0m Parsing test
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m[1mtest[0m[2m:[0m[1moperand[0m[2m:[0m [2msky_syntax::grammar::expr[0m[2m:[0m Parsing operand. Current token: IDENTIFIER
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m[1mtest[0m[2m:[0m[1moperand[0m[2m:[0m [2msky_syntax::grammar::expr[0m[2m:[0m Parsing literal. Literal token: IDENTIFIER
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m[1mtest[0m[2m:[0m[1moperand[0m[2m:[0m [2msky_syntax::grammar::expr[0m[2m:[0m Finished parsing operand
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m[1mtest[0m[2m:[0m [2msky_syntax::grammar::expr[0m[2m:[0m Completed test
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Finished parsing expression statement
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Finished parsing small statement
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Finished parsing simple statement
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Finished parsing statement
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Parsing statement. Current token: WHITESPACE
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Parsing simple statement. Current token: WHITESPACE
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Parsing small statement. Current token: WHITESPACE
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Parsing expression statement. Current token: WHITESPACE
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m[1mtest[0m[2m:[0m [2msky_syntax::grammar::expr[0m[2m:[0m Parsing test
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m[1mtest[0m[2m:[0m[1moperand[0m[2m:[0m [2msky_syntax::grammar::expr[0m[2m:[0m Parsing operand. Current token: WHITESPACE
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m[1mtest[0m[2m:[0m[1moperand[0m[2m:[0m [2msky_syntax::grammar::expr[0m[2m:[0m Finished parsing operand
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m[1mtest[0m[2m:[0m [2msky_syntax::grammar::expr[0m[2m:[0m Completed test
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Finished parsing expression statement
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Finished parsing small statement
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Finished parsing simple statement
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Finished parsing statement
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Parsing statement. Current token: WHITESPACE
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Parsing simple statement. Current token: WHITESPACE
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Parsing small statement. Current token: WHITESPACE
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m [2msky_syntax::grammar::statements[0m[2m:[0m Parsing expression statement. Current token: WHITESPACE
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m[1mtest[0m[2m:[0m [2msky_syntax::grammar::expr[0m[2m:[0m Parsing test
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m[1mtest[0m[2m:[0m[1moperand[0m[2m:[0m [2msky_syntax::grammar::expr[0m[2m:[0m Parsing operand. Current token: WHITESPACE
+[34mDEBUG[0m [1mroot[0m[2m:[0m[1mstatement[0m[2m:[0m[1msimple_stmt[0m[2m:[0m[1msmall_stmt[0m[2m:[0m[1mexpr_stmt[0m[2m:[0m[1mtest[0m[2m:[0m[1moperand[0m[2m:[0m [2msky_syntax::grammar::expr[0m[2m:[0m Finished parsing operand

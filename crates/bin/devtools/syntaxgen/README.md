@@ -28,11 +28,3 @@ The main entry point for SyntaxGen is the `main` function, which performs the fo
 3. Lowers the grammar to an AST
 4. Generates the syntax kinds, tokens, and nodes for the Starlark language
 5. Ensures the generated files are up-to-date and reformats them using `rustfmt`
-
-The `add_preamble` function is used to add a preamble to the generated files, which includes a warning not to edit the file by hand and a link to the source of the file.
-
-The `ensure_file_contents` function checks whether the contents of the generated files are up-to-date. If they are not, it updates the files and logs a warning.
-
-The `reformat` function reformats the generated code using `rustfmt` with the `fn_single_line` configuration option.
-
-The `init_logging` function initializes logging with the `tracing_subscriber` crate, allowing for debugging and event logging during the code generation process.

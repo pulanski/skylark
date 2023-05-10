@@ -13,9 +13,13 @@ use crate::{parser::Parser, SyntaxKind, T};
 /// ```
 /// Root = File
 /// ```
+#[tracing::instrument(level = "debug", skip(p))]
 pub(crate) fn root(p: &mut Parser) {
+    tracing::debug!("Parsing file for syntax tree");
     let m = p.start();
     file(p);
+
+    tracing::debug!("Parsing file for syntax tree: complete");
     m.complete(p, SyntaxKind::FILE);
 }
 
