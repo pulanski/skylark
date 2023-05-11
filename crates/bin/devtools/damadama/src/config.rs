@@ -41,6 +41,7 @@ pub enum ConfigError {
     ParseFile,
 }
 
+// TODO: change logic here to use the workspace/cell root and create a default config file there
 pub fn load_config(config_path: &Path) -> Result<Config> {
     if !config_path.exists() {
         create_default_config(config_path)?;

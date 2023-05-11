@@ -1,12 +1,15 @@
 // target.rs
 
-use crate::cargo_toml::{parse_cargo_toml, Dependency};
+use crate::cargo_toml::{extract_deps, Dependency};
 use crate::config::Reindeer;
 use anyhow::Result;
 use derive_more::Display;
 use getset::{Getters, MutGetters, Setters};
 use smartstring::alias::String;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
+use std::path::PathBuf;
+use std::thread;
+use std::time::Duration;
 use thiserror::Error;
 use typed_builder::TypedBuilder;
 
@@ -134,7 +137,7 @@ pub enum TargetError {
     CargoTomlParseError(#[from] toml::de::Error),
 }
 
-/// The canonical name for a dependency in the local registry (i.e. `third-party/rust/`) as referenced
+/// The canonical name for a dependency in the workspace's registry (i.e. `third-party/rust/`) as referenced
 /// by the deps attribute of a target `//third-party/rust:clap` where `clap` is the dependency name
 /// which can be found in the `Cargo.toml` file located alongside the `reindeer.toml` file).
 #[derive(
@@ -159,12 +162,17 @@ pub struct CanonicalDependency {
 // TODO: need to figure out how to do mapping for local dependencies (e.g. first-party crates
 //       like `//crates/foo:bar` or `//crates/foo/bar:baz`)
 impl Target {
-    pub fn from_cargo_toml_and_used_dependencies(
-        used_dependencies: HashSet<Dependency>,
+    pub fn from_pruned_cargo_toml(
+        used_dependencies: BTreeSet<Dependency>,
         reindeer: &Reindeer,
+        root_cargo_toml: &PathBuf,
     ) -> Result<Vec<Target>> {
+        // Get the workspace members from the root Cargo.toml file, if any
+        // TODO:
+        // let workspace_members = Self::get_workspace_members(root_cargo_toml)?;
+
         // Map the used dependencies to their corresponding paths in the local registry
-        let local_registry_map = Self::create_local_registry_map(reindeer)?;
+        let local_registry_map = Self::create_local_registry_map(reindeer, root_cargo_toml)?;
 
         // Map the used dependencies to their corresponding canonical names in the local registry
         let canonical_dependencies_used =
@@ -202,6 +210,7 @@ impl Target {
     /// file cannot be parsed.
     fn create_local_registry_map(
         reindeer: &Reindeer,
+        root_cargo_toml: &PathBuf,
         // TODO: add support for a workspace Cargo.toml file
         // ws_members: Option<&[PathBuf]>,
     ) -> Result<HashMap<Dependency, CanonicalDependency>> {
@@ -234,14 +243,13 @@ impl Target {
 
         // Returns a flat list of dependencies from a Cargo.toml file.
         // This is a superset of the dependencies required to pass `cargo check`.
-        let cargo_toml_deps = parse_cargo_toml(&cargo_toml_path)?;
+        let cargo_toml_deps = extract_deps(&cargo_toml_path)?;
         let registry = reindeer.directory().ok_or_else(|| {
             TargetError::ReindeerTomlNotFound("Reindeer directory not found".into())
         })?;
 
         let mut local_registry_map = HashMap::new();
         for dep in cargo_toml_deps {
-            tracing::debug!(dependency = %dep.name(), "Found dependency in Cargo.toml");
             local_registry_map.insert(
                 dep.clone(),
                 CanonicalDependency::builder()
@@ -251,12 +259,12 @@ impl Target {
             tracing::debug!(
                 dependency = %dep.name(),
                 canonical_name = %local_registry_map.get(&dep).unwrap().canonical_name(),
-                "Mapped dependency to local registry"
+                "Mapped dependency found in Cargo.toml to local registry"
             );
         }
 
         tracing::debug!(
-            "Created local_registry_map with {} entries",
+            "Materialized local registry with {} entries",
             local_registry_map.len()
         );
 
@@ -264,22 +272,36 @@ impl Target {
     }
 
     fn map_used_dependencies_to_canonical_names(
-        used_dependencies: HashSet<Dependency>,
+        used_dependencies: BTreeSet<Dependency>,
         local_registry_map: HashMap<Dependency, CanonicalDependency>,
-    ) -> HashSet<CanonicalDependency> {
-        let mut used_dependencies_canonical_names = HashSet::new();
+    ) -> BTreeSet<CanonicalDependency> {
+        let mut used_dependencies_canonical_names = BTreeSet::new();
 
         for used_dependency in used_dependencies.iter() {
-            tracing::debug!(dependency = %used_dependency.name(), "Found used dependency");
-            let canonical_dependency = local_registry_map
-                .get(used_dependency)
-                .expect("Dependency not found in local registry map");
-            tracing::debug!(
-                dependency = %used_dependency.name(),
-                canonical_name = %canonical_dependency.canonical_name(),
-                "Mapped used dependency to canonical name"
-            );
-            used_dependencies_canonical_names.insert(canonical_dependency.clone());
+            if let Some(canonical_dependency) = local_registry_map.get(used_dependency) {
+                tracing::debug!(
+                    dependency = %used_dependency.name(),
+                    canonical_name = %canonical_dependency.canonical_name(),
+                    "Found canonical name for used dependency"
+                );
+                used_dependencies_canonical_names.insert(canonical_dependency.clone());
+            } else {
+                tracing::warn!(
+                    dependency = %used_dependency.name(),
+                    "Could not find canonical name for used dependency in "
+                );
+                tracing::warn!(
+                    dependency = %used_dependency.name(),
+                    "This dependency will not be included in the generated BUCK/BUILD files."
+                );
+                tracing::warn!(
+                    dependency = %used_dependency.name(),
+                    " This is likely an issue with aliasing a third-party dependency or a local workspace member.
+                    Skipping for now. Please open an issue at
+                    https://github.com/pulanski/elk/issues/new to help us improve."
+                );
+                thread::sleep(Duration::from_secs(3));
+            }
         }
 
         tracing::debug!(
@@ -289,4 +311,8 @@ impl Target {
 
         used_dependencies_canonical_names
     }
+
+    // fn get_workspace_members(root_cargo_toml: &PathBuf) -> Result<Vec<CanonicalizedDependency>> {
+    //     // TODO: implement this
+    // }
 }

@@ -5,13 +5,14 @@ use crate::{
     config::Config,
     generator::{bazel::BazelGenerator, buck::BuckGenerator, Generator},
     target::Target,
+    task::{increment_completed_task, increment_in_progress_task},
 };
 use anyhow::Result;
 use cargo_toml::Manifest;
 use getset::{Getters, MutGetters, Setters};
 use smartstring::alias::String;
 use std::{
-    collections::{BTreeMap, HashSet},
+    collections::{BTreeMap, BTreeSet, HashSet},
     fmt::Debug,
     fs,
     io::Read,
@@ -48,8 +49,8 @@ impl Debug for Dependency {
     }
 }
 
-fn extract_dependencies(manifest: &Manifest) -> HashSet<Dependency> {
-    let mut deps = HashSet::new();
+fn extract_dependencies_from_manifest(manifest: &Manifest) -> BTreeSet<Dependency> {
+    let mut deps = BTreeSet::new();
 
     extract_dependency_names(&manifest.dependencies, &mut deps);
     extract_dependency_names(&manifest.dev_dependencies, &mut deps);
@@ -71,7 +72,7 @@ fn extract_dependencies(manifest: &Manifest) -> HashSet<Dependency> {
 
 fn extract_dependency_names(
     dep_map: &BTreeMap<std::string::String, cargo_toml::Dependency>,
-    deps: &mut HashSet<Dependency>,
+    deps: &mut BTreeSet<Dependency>,
 ) {
     for name in dep_map.keys() {
         deps.insert(Dependency::builder().name(name.to_string().into()).build());
@@ -132,14 +133,24 @@ pub fn is_workspace_cargo_toml(path: &PathBuf) -> Result<bool> {
     Ok(manifest.workspace.is_some())
 }
 
-pub fn parse_cargo_toml(cargo_toml_path: &PathBuf) -> Result<HashSet<Dependency>> {
-    let manifest = Manifest::from_path(cargo_toml_path).expect("Failed to parse Cargo.toml");
-    let deps = extract_dependencies(&manifest);
+/// **Extract dependecies** found within a **Rust package**, where a
+/// **Rust package** is defined as a directory containing a `Cargo.toml` file.
+#[tracing::instrument(level = "trace", skip(cargo_toml_path))]
+pub fn extract_deps(cargo_toml_path: &PathBuf) -> Result<BTreeSet<Dependency>> {
+    let manifest = Manifest::from_path(cargo_toml_path)?;
+    let deps = extract_dependencies_from_manifest(&manifest);
 
     Ok(deps)
 }
 
-pub fn process_cargo_toml(cargo_toml_path: &PathBuf, config: &Config) -> Result<()> {
+#[tracing::instrument(level = "trace", skip(cargo_toml_path, config))]
+pub async fn process_and_generate(
+    cargo_toml_path: &PathBuf,
+    config: &Config,
+    root_cargo_toml: &PathBuf,
+) -> Result<()> {
+    increment_in_progress_task();
+
     tracing::debug!(
         "Processing {} with config: {:?}",
         cargo_toml_path.display(),
@@ -150,7 +161,7 @@ pub fn process_cargo_toml(cargo_toml_path: &PathBuf, config: &Config) -> Result<
     // This is a superset of the dependencies required to pass `cargo check`.
     // We then analyze the source files to determine which dependencies are actually used,
     // pruning the list to only those dependencies.
-    let cargo_toml_deps = parse_cargo_toml(cargo_toml_path)?;
+    let cargo_toml_deps = extract_deps(cargo_toml_path)?;
 
     tracing::debug!(
         "Found {} dependencies declared within Cargo.toml",
@@ -164,7 +175,7 @@ pub fn process_cargo_toml(cargo_toml_path: &PathBuf, config: &Config) -> Result<
     tracing::debug!("Analyzing source files...");
     thread::sleep(Duration::from_secs(1));
 
-    let used_dependencies = analyze_source_files(cargo_toml_path, cargo_toml_deps)?;
+    let used_dependencies = analyze_source_files(cargo_toml_path, cargo_toml_deps).await?;
 
     for dep in &used_dependencies {
         tracing::debug!("\tDependency: {:?}", dep);
@@ -174,9 +185,10 @@ pub fn process_cargo_toml(cargo_toml_path: &PathBuf, config: &Config) -> Result<
     thread::sleep(Duration::from_secs(1));
 
     // Create a list of the targets to be generated
-    let targets = Target::from_cargo_toml_and_used_dependencies(
+    let targets = Target::from_pruned_cargo_toml(
         used_dependencies,
         config.reindeer_directory(),
+        root_cargo_toml,
     )?;
 
     let generator: Box<dyn Generator> = match config.output_format() {
@@ -188,14 +200,16 @@ pub fn process_cargo_toml(cargo_toml_path: &PathBuf, config: &Config) -> Result<
     // Generate the BUILD/BUCK file for the crate
     Generator::generate_build_file(&*generator, &targets)?;
 
+    increment_completed_task();
     Ok(())
 }
 
-fn analyze_source_files(
+#[tracing::instrument(level = "trace", skip(cargo_toml_path, cargo_toml_deps))]
+async fn analyze_source_files(
     cargo_toml_path: &Path,
-    cargo_toml_deps: HashSet<Dependency>,
-) -> Result<HashSet<Dependency>> {
-    let mut used_dependencies = HashSet::new();
+    cargo_toml_deps: BTreeSet<Dependency>,
+) -> Result<BTreeSet<Dependency>> {
+    let mut used_dependencies = BTreeSet::new();
     let crate_root = cargo_toml_path
         .parent()
         .ok_or_else(|| anyhow::Error::from(CrateError::CrateRootNotFound))?;

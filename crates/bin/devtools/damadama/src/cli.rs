@@ -28,7 +28,7 @@ pub struct Cli {
     )]
     verbosity: Level,
 
-    /// The output format for the generated file (e.g. `BUCK`, `BUILD`, `BUILD.bazel`, or both)
+    /// The output format for the generated file (e.g. `BUCK`, `BUILD`, or both)
     /// [default: BUCK]
     #[clap(
         short = 'f',
@@ -39,8 +39,8 @@ pub struct Cli {
     output_format: OutputFormat,
 
     /// The path to the configuration file to use
-    /// [default: ./dama.toml]
-    /// [env: DAMADAMA_CONFIG_PATH]
+    /// [default: dama.toml in the workspace/cell root]
+    /// [env: DAMA_CONFIG_PATH]
     #[clap(short = 'c', long, required = false, default_value = "./dama.toml")]
     config_path: PathBuf,
 }
