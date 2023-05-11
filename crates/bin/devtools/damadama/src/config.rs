@@ -2,19 +2,28 @@
 
 use crate::cli::OutputFormat;
 use anyhow::{Context, Result};
+use getset::{Getters, MutGetters, Setters};
 use serde::Deserialize;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use thiserror::Error;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Getters, MutGetters, Setters)]
+#[getset(get = "pub", get_mut = "pub", set = "pub")]
 pub struct Reindeer {
     /// The path to the reindeer.toml file. This is where all vendored
     /// dependencies are listed and the buckified dependencies are written
     /// to (e.g. `third-party/rust/reindeer.toml`).
-    pub path: String,
+    pub path: PathBuf,
 }
 
-#[derive(Debug, Deserialize)]
+impl Reindeer {
+    pub fn directory(&self) -> Option<&Path> {
+        self.path.parent()
+    }
+}
+
+#[derive(Debug, Deserialize, Getters, MutGetters, Setters)]
+#[getset(get = "pub", get_mut = "pub", set = "pub")]
 pub struct Config {
     #[serde(rename = "reindeer")]
     pub reindeer_directory: Reindeer,
